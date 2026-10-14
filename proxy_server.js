@@ -17,11 +17,13 @@ const path = require('path');
 
 try { require('dotenv').config(); } catch(e) {}
 
+const { handleAdminRoutes, initAutonomousScheduler } = require('./admin_panel');
+
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
 const APP_NAME = process.env.APP_NAME || 'Juggo TV';
 const SECURITY_TOKEN = process.env.SECURITY_TOKEN || '';
-const STREAM_MODE = (process.env.STREAM_MODE || 'REDIRECT').toUpperCase();
+let STREAM_MODE = (process.env.STREAM_MODE || 'REDIRECT').toUpperCase();
 
 const M3U_PATH = path.join(__dirname, 'Canais de TV.m3u8');
 const QUALITIES_FILE = path.join(__dirname, 'channel_qualities.json');
@@ -446,6 +448,23 @@ const server = http.createServer((req, res) => {
         res.end();
         return;
     }
+
+    // 0. Painel de Administração & Área de Membros (/admin)
+    const adminHandled = handleAdminRoutes(req, res, {
+        pathname,
+        parsedUrl,
+        clientHost,
+        channels,
+        ALL_MOVIES,
+        ALL_SERIES,
+        activeStats,
+        BACKUP_SERVERS,
+        APP_NAME,
+        SECURITY_TOKEN,
+        STREAM_MODE,
+        loadChannels
+    });
+    if (adminHandled) return;
 
     // Logos locais
     if (pathname.startsWith('/logos/')) {
@@ -2077,7 +2096,12 @@ loadChannels();
 
 server.listen(PORT, HOST, () => {
     console.log(`=======================================================`);
-    console.log(` IPTV Brasil - Web TV Player & VOD Cinema Online!`);
-    console.log(` Acesse no navegador: http://localhost:${PORT}`);
+    console.log(` ⚡ ${APP_NAME} - Web TV, VOD Cinema & Painel de Membros!`);
+    console.log(` 📺 Web TV:      http://localhost:${PORT}/`);
+    console.log(` 🔒 Painel Admin: http://localhost:${PORT}/admin (login: neto)`);
+    console.log(` 📡 Lista M3U:   http://localhost:${PORT}/playlist.m3u?token=${SECURITY_TOKEN}`);
     console.log(`=======================================================`);
+
+    // Iniciar agendador autônomo de Jogos do Dia
+    initAutonomousScheduler({ channels, loadChannels });
 });
