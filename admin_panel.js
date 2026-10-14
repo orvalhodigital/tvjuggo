@@ -13,6 +13,8 @@ const path = require('path');
 const channelHealth = require('./services/channel_health');
 const aiScheduler = require('./services/ai_scheduler');
 const githubMiner = require('./services/github_miner');
+const footballHub = require('./services/football_hub');
+const cs2Hub = require('./services/cs2_hub');
 
 let lastGamesUpdateTimestamp = null;
 let lastUpdateOutput = 'Nenhuma execução recente.';
@@ -250,6 +252,42 @@ function handleAdminRoutes(req, res, context) {
 
         res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
         res.end(JSON.stringify({ success: true, message: 'Rastreamento no GitHub e fontes abertas iniciado!' }));
+        return true;
+    }
+
+    // 10. API para Forçar Atualização de Futebol & Poliesportes (ESPN)
+    if (pathname === '/api/admin/sync-sports' && req.method === 'POST') {
+        if (!isAuthenticated(req)) {
+            res.writeHead(401, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Não autorizado' }));
+            return true;
+        }
+
+        footballHub.clearCache();
+        footballHub.preloadAll().then(() => {
+            console.log('[Admin] Sincronização de poliesportes concluída.');
+        });
+
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ success: true, message: 'Sincronização com ESPN iniciada para todas as ligas!' }));
+        return true;
+    }
+
+    // 11. API para Forçar Atualização de CS2 & HLTV
+    if (pathname === '/api/admin/sync-cs2' && req.method === 'POST') {
+        if (!isAuthenticated(req)) {
+            res.writeHead(401, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Não autorizado' }));
+            return true;
+        }
+
+        cs2Hub.clearCache();
+        cs2Hub.getCs2Data().then(() => {
+            console.log('[Admin] Sincronização de CS2 & HLTV concluída.');
+        });
+
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ success: true, message: 'Sincronização com HLTV e Liquipedia iniciada!' }));
         return true;
     }
 
@@ -852,12 +890,61 @@ function renderAdminDashboard(context) {
                 </button>
                 <div class="log-box" id="minerLogBox" style="color: #6ee7b7;">Pronto para rastreamento.</div>
             </div>
+
+            <!-- 4. Central Poliesportiva & Futebol (ESPN) -->
+            <div class="action-card" style="border-color: rgba(16, 185, 129, 0.4);">
+                <div class="action-title">🏆 Futebol & Poliesportes (ESPN)</div>
+                <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">
+                    Sincronização autônoma de todas as ligas (Brasileirão, Champions, Premier, NBA, Vôlei e NFL) com rodadas completas.
+                </p>
+                <button class="btn-action" id="btnSyncSports" onclick="triggerSyncSports()">
+                    <span>⚡ Atualizar Poliesportes Agora</span>
+                </button>
+                <div class="log-box" id="sportsLogBox" style="color: #6ee7b7;">Cache ativo. Clique para forçar atualização imediata.</div>
+            </div>
+
+            <!-- 5. CS2 Hub & HLTV Mundial -->
+            <div class="action-card" style="border-color: rgba(245, 158, 11, 0.4);">
+                <div class="action-title">🎯 CS2 Hub & Rankings HLTV</div>
+                <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">
+                    Rankings mundiais e brasileiros da HLTV, torneios Tier 1/S e transmissões ao vivo da Liquipedia (Twitch, YouTube, Kick).
+                </p>
+                <button class="btn-action" style="background: linear-gradient(135deg, #f59e0b, #d97706);" id="btnSyncCs2" onclick="triggerSyncCs2()">
+                    <span>🎯 Atualizar CS2 & HLTV Agora</span>
+                </button>
+                <div class="log-box" id="csLogBox" style="color: #fde68a;">Cache ativo. Clique para forçar sincronização com a HLTV.</div>
+            </div>
         </div>
     </main>
 
     <div class="toast" id="toast">Link copiado!</div>
 
     <script>
+        function triggerSyncSports() {
+            const btn = document.getElementById('btnSyncSports');
+            btn.disabled = true;
+            btn.innerText = '⏳ Sincronizando ligas com a ESPN...';
+            fetch('/api/admin/sync-sports', { method: 'POST' })
+                .then(r => r.json())
+                .then(res => {
+                    showToast(res.message);
+                    document.getElementById('sportsLogBox').innerText = '✅ Todas as ligas foram sincronizadas e armazenadas em cache!';
+                    setTimeout(() => { btn.disabled = false; btn.innerText = '⚡ Atualizar Poliesportes Agora'; refreshStatus(); }, 4000);
+                });
+        }
+
+        function triggerSyncCs2() {
+            const btn = document.getElementById('btnSyncCs2');
+            btn.disabled = true;
+            btn.innerText = '⏳ Sincronizando HLTV e Liquipedia...';
+            fetch('/api/admin/sync-cs2', { method: 'POST' })
+                .then(r => r.json())
+                .then(res => {
+                    showToast(res.message);
+                    document.getElementById('csLogBox').innerText = '✅ HLTV Rankings & Partidas de CS2 atualizadas!';
+                    setTimeout(() => { btn.disabled = false; btn.innerText = '🎯 Atualizar CS2 & HLTV Agora'; refreshStatus(); }, 4000);
+                });
+        }
         function copyPlaylistUrl() {
             const url = document.getElementById('playlistUrlText').innerText;
             navigator.clipboard.writeText(url).then(() => {

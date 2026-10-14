@@ -237,6 +237,11 @@ function getFallbackMatches() {
     ];
 }
 
+function clearCache() {
+    cachedMatches = null;
+    lastMatchesFetch = 0;
+}
+
 function getCs2Data() {
     return getCs2Matches().then(matches => {
         return {
@@ -250,5 +255,6 @@ function getCs2Data() {
 module.exports = {
     getCs2Data,
     getCs2Matches,
-    HLTV_RANKING
+    HLTV_RANKING,
+    clearCache
 };

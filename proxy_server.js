@@ -540,10 +540,10 @@ function renderWebTVApp(host) {
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
         :root {
-            --bg-glass: rgba(13, 17, 28, 0.82);
-            --bg-card: rgba(22, 28, 45, 0.75);
-            --bg-card-active: rgba(37, 99, 235, 0.35);
-            --border-glass: rgba(255, 255, 255, 0.1);
+            --bg-glass: rgba(8, 12, 22, 0.58);
+            --bg-card: rgba(16, 24, 42, 0.45);
+            --bg-card-active: rgba(37, 99, 235, 0.4);
+            --border-glass: rgba(255, 255, 255, 0.08);
             --primary: #2563eb;
             --accent: #10b981;
             --gold: #f59e0b;
@@ -553,6 +553,28 @@ function renderWebTVApp(host) {
         }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', sans-serif; user-select: none; }
         html, body { width: 100vw; height: 100vh; overflow: hidden; background: #000; color: var(--text-main); }
+
+        /* Barra de Scroll Suave & Discreta (Custom Ultra-Thin) */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.16);
+            border-radius: 10px;
+            transition: background 0.2s ease;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.38);
+        }
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+            scroll-behavior: smooth;
+        }
 
         /* Video Player Edge-to-Edge */
         #videoContainer {
@@ -580,8 +602,8 @@ function renderWebTVApp(host) {
             justify-content: space-between;
             pointer-events: auto;
             opacity: 1;
-            transition: opacity 0.4s ease;
-            background: linear-gradient(180deg, rgba(7, 9, 14, 0.75) 0%, rgba(7, 9, 14, 0.1) 40%, rgba(7, 9, 14, 0.85) 100%);
+            transition: opacity 0.35s ease;
+            background: linear-gradient(180deg, rgba(6, 8, 14, 0.6) 0%, rgba(6, 8, 14, 0.05) 45%, rgba(6, 8, 14, 0.75) 100%);
         }
         #tvOverlay.hidden {
             opacity: 0;
@@ -593,7 +615,7 @@ function renderWebTVApp(host) {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 24px 40px;
+            padding: 20px 36px;
         }
         .channel-watermark {
             display: flex;
@@ -601,149 +623,199 @@ function renderWebTVApp(host) {
             gap: 14px;
         }
         .channel-watermark img {
-            height: 44px;
-            max-width: 120px;
+            height: 40px;
+            max-width: 110px;
             object-fit: contain;
             filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6));
         }
         .widget-clock {
             display: flex;
             align-items: center;
-            gap: 20px;
-            font-size: 18px;
+            gap: 18px;
+            font-size: 16px;
             font-weight: 700;
             color: #fff;
-            background: rgba(16, 22, 38, 0.6);
+            background: rgba(10, 16, 28, 0.5);
             backdrop-filter: blur(12px);
-            padding: 8px 20px;
+            padding: 6px 18px;
             border-radius: 30px;
             border: 1px solid var(--border-glass);
         }
 
-        /* Center Main Menu HUD */
+        /* Center Main Menu HUD - Ocupa no máximo 60% da tela */
         .tv-main-hud {
             display: flex;
             height: 65vh;
-            padding: 0 40px;
-            gap: 20px;
-            align-items: center;
+            max-width: 62vw;
+            width: fit-content;
+            padding: 0 24px;
+            gap: 12px;
+            align-items: stretch;
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            z-index: 20;
         }
 
-        /* Leftmost Rail */
+        /* Camada 1: Leftmost Rail (Sempre discreto e elegante) */
         .rail-nav {
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 10px;
             background: var(--bg-glass);
             backdrop-filter: blur(20px);
             border: 1px solid var(--border-glass);
-            border-radius: 24px;
-            padding: 16px 12px;
+            border-radius: 20px;
+            padding: 14px 8px;
+            flex-shrink: 0;
+            width: 56px;
+            align-items: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+            z-index: 25;
         }
         .rail-btn {
-            width: 48px;
-            height: 48px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             border: none;
             background: transparent;
             color: var(--text-muted);
-            font-size: 20px;
+            font-size: 18px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.2s;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            outline: none;
         }
-        .rail-btn:hover, .rail-btn.active {
+        .rail-btn:hover, .rail-btn:focus, .rail-btn.active {
             background: var(--primary);
             color: #fff;
-            box-shadow: 0 0 16px rgba(37, 99, 235, 0.5);
-            transform: scale(1.08);
+            box-shadow: 0 0 16px rgba(37, 99, 235, 0.6);
+            transform: scale(1.1);
         }
 
-        /* Category Column */
+        /* Camada 2: Coluna de Categorias (Abre em cascata/camada) */
         .category-col {
-            width: 250px;
-            height: 100%;
+            width: 0;
+            opacity: 0;
+            overflow: hidden;
+            pointer-events: none;
+            padding: 0;
+            margin: 0;
+            border: none;
             background: var(--bg-glass);
             backdrop-filter: blur(20px);
-            border: 1px solid var(--border-glass);
-            border-radius: 24px;
-            padding: 20px 14px;
+            border-radius: 20px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
+            transition: width 0.32s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease, padding 0.32s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+            flex-shrink: 0;
+            z-index: 24;
+        }
+        .category-col.layer-active {
+            width: 220px;
+            opacity: 1;
+            pointer-events: auto;
+            padding: 16px 12px;
+            border: 1px solid var(--border-glass);
             overflow-y: auto;
         }
         .col-title {
-            font-size: 15px;
+            font-size: 13px;
             font-weight: 800;
             color: #fff;
             letter-spacing: 0.5px;
-            padding: 0 12px 10px 12px;
+            padding: 0 6px 10px 6px;
             border-bottom: 1px solid var(--border-glass);
             margin-bottom: 6px;
             display: flex;
             justify-content: space-between;
+            align-items: center;
         }
         .cat-item {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 12px 14px;
-            border-radius: 14px;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 12px;
             cursor: pointer;
             transition: all 0.2s;
             color: var(--text-muted);
             font-weight: 600;
-            font-size: 14px;
+            font-size: 13px;
+            outline: none;
         }
         .cat-item:hover, .cat-item.active {
             background: rgba(255, 255, 255, 0.1);
             color: #fff;
             transform: translateX(4px);
         }
+        .cat-item:focus {
+            outline: none;
+            border-color: #60a5fa !important;
+            background: rgba(37, 99, 235, 0.3) !important;
+            box-shadow: 0 0 14px rgba(37, 99, 235, 0.5);
+            color: #fff;
+        }
         .cat-item.active {
-            background: linear-gradient(90deg, rgba(37, 99, 235, 0.4), rgba(37, 99, 235, 0.1));
+            background: linear-gradient(90deg, rgba(37, 99, 235, 0.45), rgba(37, 99, 235, 0.15));
             border-left: 3px solid var(--primary);
         }
-        .cat-icon { font-size: 18px; }
+        .cat-icon { font-size: 16px; }
 
-        /* Channels Column */
+        /* Camada 3: Coluna de Canais (Abre em cascata/camada) */
         .channels-col {
-            width: 380px;
-            height: 100%;
+            width: 0;
+            opacity: 0;
+            overflow: hidden;
+            pointer-events: none;
+            padding: 0;
+            margin: 0;
+            border: none;
             background: var(--bg-glass);
             backdrop-filter: blur(20px);
-            border: 1px solid var(--border-glass);
-            border-radius: 24px;
-            padding: 20px 16px;
+            border-radius: 20px;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 8px;
+            transition: width 0.32s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease, padding 0.32s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+            flex-shrink: 0;
+            z-index: 23;
+        }
+        .channels-col.layer-active {
+            width: 320px;
+            opacity: 1;
+            pointer-events: auto;
+            padding: 16px 14px;
+            border: 1px solid var(--border-glass);
             overflow-y: auto;
         }
         .channel-card {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 14px;
             background: var(--bg-card);
             border: 1px solid var(--border-glass);
-            border-radius: 16px;
-            padding: 12px 16px;
+            border-radius: 14px;
+            padding: 10px 14px;
             cursor: pointer;
             transition: all 0.2s;
             position: relative;
+            outline: none;
         }
-        .channel-card:hover, .channel-card.focused {
-            border-color: rgba(255, 255, 255, 0.3);
-            background: rgba(30, 41, 69, 0.85);
+        .channel-card:hover, .channel-card:focus {
+            border-color: rgba(96, 165, 250, 0.6);
+            background: rgba(28, 38, 64, 0.7);
             transform: scale(1.02);
+            box-shadow: 0 0 14px rgba(37, 99, 235, 0.35);
         }
         .channel-card.active {
             background: var(--bg-card-active);
             border-color: var(--primary);
-            box-shadow: 0 0 20px rgba(37, 99, 235, 0.3);
+            box-shadow: 0 0 18px rgba(37, 99, 235, 0.4);
         }
         .channel-card.active::before {
             content: '';
@@ -751,20 +823,20 @@ function renderWebTVApp(host) {
             left: 0;
             top: 20%;
             height: 60%;
-            width: 4px;
+            width: 3px;
             background: #fff;
             border-radius: 0 4px 4px 0;
             box-shadow: 0 0 8px #fff;
         }
         .ch-logo-box {
-            width: 56px;
-            height: 56px;
-            border-radius: 12px;
-            background: rgba(0, 0, 0, 0.6);
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.5);
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 6px;
+            padding: 4px;
             flex-shrink: 0;
         }
         .ch-logo-box img {
@@ -773,9 +845,9 @@ function renderWebTVApp(host) {
             object-fit: contain;
         }
         .ch-details { flex: 1; overflow: hidden; }
-        .ch-name { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .ch-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-        .ch-badges { display: flex; gap: 6px; margin-top: 6px; }
+        .ch-name { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ch-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+        .ch-badges { display: flex; gap: 6px; margin-top: 4px; }
         .badge {
             font-size: 10px;
             font-weight: 800;
@@ -787,33 +859,62 @@ function renderWebTVApp(host) {
         .badge.hd { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
         .badge.live { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
 
-        /* Right Panel: Now Playing & EPG Details */
+        /* Botões de controle de camada (Voltar / Fechar) */
+        .layer-ctrl-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border-glass);
+            color: var(--text-muted);
+            border-radius: 8px;
+            padding: 3px 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            outline: none;
+        }
+        .layer-ctrl-btn:hover, .layer-ctrl-btn:focus {
+            background: rgba(255, 255, 255, 0.22);
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        /* Camada 4: Now Playing & EPG Details */
         .now-playing-panel {
-            flex: 1;
+            width: 300px;
             height: 100%;
             background: var(--bg-glass);
             backdrop-filter: blur(20px);
             border: 1px solid var(--border-glass);
-            border-radius: 24px;
-            padding: 32px;
-            display: flex;
+            border-radius: 20px;
+            padding: 22px;
+            display: none;
             flex-direction: column;
             justify-content: space-between;
+            transition: all 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+            flex-shrink: 0;
+            z-index: 22;
         }
-        .np-label { font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
-        .np-title { font-size: 28px; font-weight: 900; color: #fff; margin: 8px 0; line-height: 1.2; }
-        .np-desc { font-size: 14px; color: #cbd5e1; line-height: 1.6; max-height: 120px; overflow-y: auto; }
-        .np-progress-box { margin-top: 20px; }
-        .progress-bar { width: 100%; height: 6px; background: rgba(255, 255, 255, 0.15); border-radius: 10px; overflow: hidden; }
+        .now-playing-panel.visible {
+            display: flex;
+        }
+        .np-label { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+        .np-title { font-size: 22px; font-weight: 900; color: #fff; margin: 8px 0; line-height: 1.2; }
+        .np-desc { font-size: 13px; color: #cbd5e1; line-height: 1.5; max-height: 110px; overflow-y: auto; }
+        .np-progress-box { margin-top: 18px; }
+        .progress-bar { width: 100%; height: 5px; background: rgba(255, 255, 255, 0.15); border-radius: 10px; overflow: hidden; }
         .progress-fill { width: 45%; height: 100%; background: var(--primary); border-radius: 10px; }
-        .progress-times { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+        .progress-times { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-top: 6px; }
 
-        /* Bottom Player Bar (Photo 2) */
+        /* Bottom Player Bar */
         .bottom-player-bar {
-            background: rgba(10, 14, 24, 0.85);
-            backdrop-filter: blur(20px);
+            background: rgba(8, 12, 20, 0.55);
+            backdrop-filter: blur(16px);
             border-top: 1px solid var(--border-glass);
-            padding: 16px 40px;
+            padding: 12px 36px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -1090,14 +1191,20 @@ function renderWebTVApp(host) {
         <button onclick="returnToLiveTv()" style="background: rgba(239, 68, 68, 0.25); border: 1px solid rgba(239, 68, 68, 0.7); color: #fca5a5; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s;">✕ Voltar para TV</button>
     </div>
 
+    <!-- Quick Channel Surfing Banner (Discreto e flutuante quando menu está fechado) -->
+    <div id="channelQuickBanner" style="position: absolute; top: 25px; left: 50%; transform: translateX(-50%); z-index: 35; display: none; align-items: center; gap: 14px; background: rgba(8, 12, 22, 0.78); border: 1px solid rgba(255, 255, 255, 0.15); backdrop-filter: blur(16px); padding: 8px 22px; border-radius: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.7); pointer-events: none; transition: opacity 0.3s ease;">
+        <img id="quickBannerLogo" src="" style="width: 32px; height: 32px; object-fit: contain;">
+        <div>
+            <div id="quickBannerName" style="font-weight: 800; font-size: 15px; color: #fff;">Nome do Canal</div>
+            <div id="quickBannerGroup" style="font-size: 11px; color: var(--accent); font-weight: 700;">Ao Vivo • HD</div>
+        </div>
+    </div>
+
     <!-- Spinner Loader -->
     <div id="loader">
         <div class="spinner"></div>
         <div style="font-weight: 700; font-size: 16px; color: #fff;" id="loaderText">Sintonizando canal...</div>
     </div>
-
-    <!-- Anti-Freeze Status Badge -->
-    <div id="stallBadge" style="position: absolute; top: 25px; right: 200px; background: rgba(15, 23, 42, 0.88); backdrop-filter: blur(12px); border: 1px solid rgba(56, 189, 248, 0.5); color: #38bdf8; padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 700; display: none; z-index: 40; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">⚡ Estabilizando sinal...</div>
 
     <!-- TV HUD Overlay -->
     <div id="tvOverlay">
@@ -1118,39 +1225,51 @@ function renderWebTVApp(host) {
             </div>
         </div>
 
-        <!-- Center HUD -->
+        <!-- Center HUD (Navegação em Camadas Progressivas) -->
         <div class="tv-main-hud">
-            <!-- Leftmost Rail -->
+            <!-- Camada 1: Rail Principal de Ícones -->
             <div class="rail-nav">
-                <button class="rail-btn active" id="railTvBtn" onclick="openTvView()" title="Canais Ao Vivo">📺</button>
+                <button class="rail-btn active" id="railTvBtn" onmouseenter="openCategoriesLayer()" onclick="toggleTvMenu(event)" title="Canais Ao Vivo (Camadas)">📺</button>
                 <button class="rail-btn" id="railFutBtn" onclick="toggleFutebolHub()" title="Central Poliesportiva (Futebol, Basquete, Vôlei, NFL)">🏆</button>
                 <button class="rail-btn" id="railCsBtn" onclick="toggleCs2Hub()" title="CS2 & Esports Hub (HLTV & Multi-Streams)">🎯</button>
-                <button class="rail-btn" onclick="toggleFavorites()" title="Favoritos">⭐</button>
-                <button class="rail-btn" onclick="focusSearch()" title="Buscar">🔍</button>
+                <button class="rail-btn" id="railEpgBtn" onclick="toggleEpgPanel()" title="Guia de Programação (EPG)">📅</button>
+                <button class="rail-btn" id="railFavBtn" onclick="openFavoritesView()" title="Favoritos">⭐</button>
+                <button class="rail-btn" id="railSearchBtn" onclick="focusSearch()" title="Buscar Canal">🔍</button>
+                <div style="flex:1;"></div>
+                <button class="rail-btn" onclick="hideOverlayNow(event)" title="Ocultar Menus" style="color:var(--text-muted); font-size:16px;">⌄</button>
             </div>
 
-            <!-- Coluna 1: Categorias -->
+            <!-- Camada 2: Coluna de Categorias (Abre em cascata) -->
             <div class="category-col" id="categoryCol">
                 <div class="col-title">
-                    <span>CATEGORIAS</span>
-                    <span id="catTotalBadge" style="font-size: 12px; color: var(--primary-light);">...</span>
+                    <span style="font-size: 13px; font-weight: 800; letter-spacing: 0.5px;">CATEGORIAS</span>
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <span id="catTotalBadge" style="font-size: 11px; color: #93c5fd; font-weight: 700;">...</span>
+                        <button onclick="closeCategoriesLayer(event)" class="layer-ctrl-btn" title="Recolher Categorias">◂</button>
+                    </div>
                 </div>
                 <div id="categoriesList">Carregando...</div>
             </div>
 
-            <!-- Coluna 2: Canais -->
+            <!-- Camada 3: Coluna de Canais (Abre em cascata) -->
             <div class="channels-col" id="channelsCol">
                 <div class="col-title">
-                    <span id="selectedCategoryTitle">CANAIS</span>
-                    <span id="channelCountBadge" style="font-size: 12px; color: var(--text-muted);">0</span>
+                    <div style="display:flex; align-items:center; gap:8px; overflow:hidden;">
+                        <button onclick="closeChannelsLayer(event)" class="layer-ctrl-btn" title="Voltar para Categorias">←</button>
+                        <span id="selectedCategoryTitle" style="text-overflow:ellipsis; overflow:hidden; white-space:nowrap; font-size:13px;">CANAIS</span>
+                    </div>
+                    <span id="channelCountBadge" style="font-size: 11px; color: var(--text-muted); font-weight: 700;">0</span>
                 </div>
                 <div id="channelCardsList">Selecione uma categoria</div>
             </div>
 
-            <!-- Coluna 3: Now Playing / EPG -->
+            <!-- Camada 4: Now Playing / EPG Details (Guia Ao Vivo) -->
             <div class="now-playing-panel" id="nowPlayingPanel">
-                <div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
                     <div class="np-label">NO AR AGORA</div>
+                    <button onclick="toggleEpgPanel(false)" class="layer-ctrl-btn" title="Fechar Guia">✕</button>
+                </div>
+                <div>
                     <div class="np-title" id="epgTitle">Programação Ao Vivo</div>
                     <div class="np-desc" id="epgDesc">Assista aos melhores canais em alta definição com guia atualizado e fallbacks automáticos da Juggo TV.</div>
                 </div>
@@ -1181,11 +1300,12 @@ function renderWebTVApp(host) {
                 <button class="media-btn" onclick="prevChannel()" title="Canal Anterior">⏮</button>
                 <button class="media-btn play-pause" id="btnPlayPause" onclick="togglePlay()" title="Play / Pause">⏸</button>
                 <button class="media-btn" onclick="nextChannel()" title="Próximo Canal">⏭</button>
-                <button class="media-btn" onclick="hideOverlayNow()" title="Ocultar Menus">⌄</button>
+                <button class="media-btn" id="btnEpgGuide" onclick="toggleEpgPanel()" title="Ver Programação (EPG)">📅</button>
+                <button class="media-btn" onclick="hideOverlayNow(event)" title="Ocultar Menus">⌄</button>
             </div>
 
             <div class="bot-right">
-                <button class="action-icon" style="color: #38bdf8;" onclick="unfreezeStream()" title="⚡ Destravar Sinal / Alternar Fallback">⚡</button>
+                <button class="action-icon" style="color: #38bdf8;" onclick="unfreezeStream()" title="⚡ Recarregar Sinal">⚡</button>
                 <button class="action-icon" onclick="reloadCurrentStream()" title="Recarregar Canal">↻</button>
                 <button class="action-icon" onclick="toggleFavoriteCurrent()" id="btnFavCurrent" title="Favoritar">⭐</button>
                 <button class="action-icon" onclick="toggleFullscreen()" title="Tela Cheia">⛶</button>
@@ -1355,7 +1475,9 @@ function renderWebTVApp(host) {
                 else if (cat.includes('Infantil') || cat.includes('Kids')) icon = '👶';
                 else if (cat.includes('Doc') || cat.includes('Variedade')) icon = '🦁';
 
-                html += '<div class="cat-item' + isActive + '" onclick="selectCategory(\\'' + escapeJs(cat) + '\\')">' +
+                html += '<div class="cat-item' + isActive + '" tabindex="0" ' +
+                    'onmouseenter="selectCategory(\\'' + escapeJs(cat) + '\\')" ' +
+                    'onclick="selectCategory(\\'' + escapeJs(cat) + '\\')">' +
                     '<span class="cat-icon">' + icon + '</span>' +
                     '<span style="flex:1; overflow:hidden; text-overflow:ellipsis;">' + cat + '</span>' +
                     '<span style="font-size:11px; opacity:0.6;">' + count + '</span>' +
@@ -1367,15 +1489,20 @@ function renderWebTVApp(host) {
         function selectCategory(cat) {
             activeCategory = cat;
             renderCategories();
-            renderChannels(cat);
+            openChannelsLayer(cat);
             resetOverlayTimer();
         }
 
         function renderChannels(cat) {
             const container = document.getElementById('channelCardsList');
-            document.getElementById('selectedCategoryTitle').innerText = cat.toUpperCase();
+            document.getElementById('selectedCategoryTitle').innerText = (cat || 'CANAIS').replace('⭐ ', '').toUpperCase();
             
-            const filtered = allChannels.filter(c => c.group === cat);
+            let filtered = [];
+            if (cat && cat.includes('Favorito')) {
+                filtered = allChannels.filter(c => favorites.includes(c.id));
+            } else {
+                filtered = allChannels.filter(c => c.group === cat);
+            }
             document.getElementById('channelCountBadge').innerText = filtered.length;
 
             if (filtered.length === 0) {
@@ -1388,14 +1515,14 @@ function renderWebTVApp(host) {
                 const isActive = (activeChannel && activeChannel.id === ch.id) ? ' active' : '';
                 const isFav = favorites.includes(ch.id);
 
-                html += '<div class="channel-card' + isActive + '" id="card_' + ch.id + '" onclick="playChannelById(\\'' + ch.id + '\\')">' +
+                html += '<div class="channel-card' + isActive + '" tabindex="0" id="card_' + ch.id + '" onclick="playChannelById(\\'' + ch.id + '\\')">' +
                     '<div class="ch-logo-box"><img src="' + ch.logo + '" onerror="this.src=\\'https://raw.githubusercontent.com/iptv-org/iptv/master/assets/images/logo.png\\'"></div>' +
                     '<div class="ch-details">' +
                         '<div class="ch-name">' + ch.name + '</div>' +
                         '<div class="ch-sub">' + (ch.group || 'Geral') + '</div>' +
                         '<div class="ch-badges">' +
                             '<span class="badge hd">' + ch.highestResolution + '</span>' +
-                            (ch.name.includes('⚽') || cat.includes('Jogos') ? '<span class="badge live">LIVE</span>' : '') +
+                            (ch.name.includes('⚽') || (cat && cat.includes('Jogos')) ? '<span class="badge live">LIVE</span>' : '') +
                         '</div>' +
                     '</div>' +
                     '<button onclick="event.stopPropagation(); toggleFavorite(\\'' + ch.id + '\\')" style="background:none; border:none; color:' + (isFav ? '#f59e0b' : '#64748b') + '; font-size:16px; cursor:pointer;">' + (isFav ? '★' : '☆') + '</button>' +
@@ -1410,12 +1537,37 @@ function renderWebTVApp(host) {
         }
 
         // ==========================================
-        // WATCHDOG ATIVO ANTI-CONGELAMENTO (HEARTBEAT)
+        // WATCHDOG ATIVO HOT-STANDBY & ANTI-TRAVAMENTO SILENCIOSO
         // ==========================================
         let stallInterval = null;
         let lastCurTime = 0;
         let frozenTicks = 0;
-        let failoverCount = 0;
+        let isMouseOverMenu = false;
+        let quickBannerTimer = null;
+        let lastMouseX = 0;
+        let lastMouseY = 0;
+
+        function showQuickChannelBanner(ch) {
+            const banner = document.getElementById('channelQuickBanner');
+            const nameEl = document.getElementById('quickBannerName');
+            const logoEl = document.getElementById('quickBannerLogo');
+            const groupEl = document.getElementById('quickBannerGroup');
+
+            if (!banner || !ch) return;
+
+            nameEl.innerText = ch.name;
+            logoEl.src = ch.logo || 'https://raw.githubusercontent.com/iptv-org/iptv/master/assets/images/logo.png';
+            groupEl.innerText = (ch.group || 'Geral') + ' • ' + (ch.highestResolution || 'HD') + ' • AO VIVO';
+
+            banner.style.display = 'flex';
+            banner.style.opacity = '1';
+
+            if (quickBannerTimer) clearTimeout(quickBannerTimer);
+            quickBannerTimer = setTimeout(() => {
+                banner.style.opacity = '0';
+                setTimeout(() => { banner.style.display = 'none'; }, 300);
+            }, 3500);
+        }
 
         function startAntiFreezeWatchdog() {
             if (stallInterval) clearInterval(stallInterval);
@@ -1424,81 +1576,64 @@ function renderWebTVApp(host) {
 
             stallInterval = setInterval(() => {
                 const video = document.getElementById('webVideo');
-                if (!video || video.paused || video.ended || video.readyState < 2) {
+                if (!video || video.paused || video.ended || video.readyState < 2 || activeEsportsStream) {
                     frozenTicks = 0;
                     return;
                 }
 
                 const cur = video.currentTime;
-                // Se o tempo de reprodução não avançou pelo menos 0.05 segundos
                 if (Math.abs(cur - lastCurTime) < 0.05) {
                     frozenTicks++;
-                    console.warn('[Watchdog Anti-Congelamento] Vídeo congelado na tela. Segundos:', frozenTicks);
 
                     if (frozenTicks === 3) {
-                        // Nível 1: micro-seek (+0.2s) para destravar o buffer de hardware
-                        showStallToast('Destravando sinal...');
-                        video.currentTime += 0.2;
+                        // Nível 1 silencioso: avanço para borda ao vivo do buffer
+                        if (video.buffered && video.buffered.length > 0) {
+                            try {
+                                video.currentTime = video.buffered.end(video.buffered.length - 1) - 0.2;
+                            } catch (e) {}
+                        }
                         video.play().catch(() => {});
                     } else if (frozenTicks === 5) {
-                        // Nível 2: recuperar erros de mídia e saltar para borda ao vivo
-                        showStallToast('Sincronizando transmissão...');
+                        // Nível 2 silencioso: recuperar decodificador de mídia sem avisos
                         if (hlsPlayer) {
-                            hlsPlayer.recoverMediaError();
-                            if (video.buffered && video.buffered.length > 0) {
-                                video.currentTime = video.buffered.end(video.buffered.length - 1) - 1;
-                            }
+                            try {
+                                hlsPlayer.recoverMediaError();
+                                hlsPlayer.startLoad();
+                            } catch (e) {}
                         }
                         video.play().catch(() => {});
                     } else if (frozenTicks >= 8) {
-                        // Nível 3: sinal morto no servidor primário; acionar failover/reconexão
-                        showStallToast('Alternando para servidor de fallback...');
+                        // Nível 3 silencioso: reload suave no servidor hot-standby invisível
                         frozenTicks = 0;
-                        failoverCount++;
                         if (activeChannel) {
-                            playChannel(activeChannel, true);
+                            playChannel(activeChannel, true, true);
                         }
                     }
                 } else {
                     frozenTicks = 0;
                     lastCurTime = cur;
                 }
-            }, 1000);
-        }
-
-        function showStallToast(msg) {
-            const badge = document.getElementById('stallBadge');
-            if (badge) {
-                badge.innerText = '⚡ ' + msg;
-                badge.style.display = 'block';
-                setTimeout(() => { badge.style.display = 'none'; }, 3000);
-            }
-        }
-
-        function hideStallToast() {
-            const badge = document.getElementById('stallBadge');
-            if (badge) badge.style.display = 'none';
+            }, 600);
         }
 
         function unfreezeStream() {
-            showStallToast('Destravando sinal...');
             const video = document.getElementById('webVideo');
             if (video) {
                 video.currentTime += 0.3;
                 video.play().catch(() => {});
             }
             if (hlsPlayer) {
-                hlsPlayer.recoverMediaError();
+                try { hlsPlayer.recoverMediaError(); hlsPlayer.startLoad(); } catch (e) {}
             }
             setTimeout(() => {
                 if (video && (video.paused || video.readyState < 2)) {
-                    if (activeChannel) playChannel(activeChannel, true);
+                    if (activeChannel) playChannel(activeChannel, true, true);
                 }
-            }, 1200);
+            }, 1000);
         }
 
-        // Tocar Canal com Buffer Anti-Travamento (90 Segundos + Deep Reservoir)
-        function playChannel(ch, isFailover = false) {
+        // Tocar Canal com Buffer Anti-Travamento e Hot-Standby
+        function playChannel(ch, isFailover = false, silent = false) {
             activeChannel = ch;
             localStorage.setItem('juggo_last_channel_id', ch.id);
 
@@ -1508,10 +1643,19 @@ function renderWebTVApp(host) {
             document.getElementById('botProgramTitle').innerText = ch.name;
             document.getElementById('botChannelName').innerText = ch.group;
             document.getElementById('epgTitle').innerText = ch.name;
-            document.getElementById('epgDesc').innerText = 'Transmitindo agora em ' + ch.highestResolution + '. Qualidade balanceada com estabilidade máxima.';
+            document.getElementById('epgDesc').innerText = 'Transmitindo agora em ' + ch.highestResolution + '. Estabilidade máxima com Hot-Standby.';
 
             renderChannels(activeCategory);
-            showLoader(true, isFailover ? 'Conectando servidor reserva...' : 'Sintonizando ' + ch.name + '...');
+
+            // Se o HUD estiver oculto, exibir o banner flutuante discreto de troca de canal
+            const overlay = document.getElementById('tvOverlay');
+            if (overlay && overlay.classList.contains('hidden')) {
+                showQuickChannelBanner(ch);
+            }
+
+            if (!silent) {
+                showLoader(true, isFailover ? 'Conectando servidor reserva...' : 'Sintonizando ' + ch.name + '...');
+            }
 
             // Limpar player de esports se estava aberto
             const iframe = document.getElementById('embedFrame');
@@ -1537,13 +1681,12 @@ function renderWebTVApp(host) {
             const cacheBuster = isFailover ? ('?retry=' + Date.now()) : '';
             const streamUrl = ch.streamUrl + cacheBuster;
 
-            // Configuração Ultra-Robusta do Hls.js para Evitar Travamentos
             if (Hls && Hls.isSupported()) {
                 hlsPlayer = new Hls({
                     enableWorker: true,
-                    lowLatencyMode: false, // Modo padrão estável (evita engasgos de internet)
+                    lowLatencyMode: false,
                     backBufferLength: 60,
-                    maxBufferLength: 90, // 90 segundos de buffer tolerante anti-oscilação
+                    maxBufferLength: 90,
                     maxMaxBufferLength: 180,
                     maxBufferSize: 90 * 1024 * 1024,
                     manifestLoadingTimeOut: 12000,
@@ -1552,11 +1695,11 @@ function renderWebTVApp(host) {
                     fragLoadingTimeOut: 18000,
                     fragLoadingMaxRetry: 5,
                     fragLoadingRetryDelay: 500,
-                    liveSyncDurationCount: 7, // 7 segmentos (~35-45s) para absorver qualquer oscilação de rede sem travar
+                    liveSyncDurationCount: 7,
                     liveMaxLatencyDurationCount: 15,
-                    maxBufferHole: 0.5, // Pula automaticamente buracos de timestamp no fluxo
+                    maxBufferHole: 0.5,
                     highBufferWatchdogPeriod: 2,
-                    nudgeOffset: 0.2, // Destrava saltos de frame no hardware decoder
+                    nudgeOffset: 0.2,
                     nudgeMaxRetry: 5,
                     maxFragLookUpTolerance: 0.25
                 });
@@ -1565,7 +1708,7 @@ function renderWebTVApp(host) {
                 hlsPlayer.attachMedia(video);
 
                 hlsPlayer.on(Hls.Events.MANIFEST_PARSED, function() {
-                    video.play().catch(e => console.log('Autoplay:', e));
+                    video.play().catch(() => {});
                     showLoader(false);
                 });
 
@@ -1573,34 +1716,25 @@ function renderWebTVApp(host) {
                     if (data.fatal) {
                         switch (data.type) {
                             case Hls.ErrorTypes.NETWORK_ERROR:
-                                showStallToast('Reconectando rede...');
                                 hlsPlayer.startLoad();
                                 break;
                             case Hls.ErrorTypes.MEDIA_ERROR:
-                                showStallToast('Recuperando decodificador...');
                                 hlsPlayer.recoverMediaError();
                                 break;
                             default:
                                 hlsPlayer.destroy();
-                                setTimeout(() => { if (activeChannel) playChannel(activeChannel, true); }, 1500);
+                                setTimeout(() => { if (activeChannel) playChannel(activeChannel, true, true); }, 1200);
                                 break;
                         }
                     }
                 });
 
-                video.onwaiting = function() {
-                    showStallToast('Bufferizando sinal...');
-                };
-                video.onplaying = function() {
-                    hideStallToast();
-                };
                 video.onstalled = function() {
-                    console.warn('[Video] Stalled detectado. Solicitando novos fragmentos...');
                     if (hlsPlayer) hlsPlayer.startLoad();
                 };
             } else {
                 video.src = streamUrl;
-                video.play().catch(e => console.log('Autoplay:', e));
+                video.play().catch(() => {});
                 showLoader(false);
             }
 
@@ -1608,19 +1742,159 @@ function renderWebTVApp(host) {
             resetOverlayTimer();
         }
 
-        // Temporizador de 7 Segundos para Auto-Hide do HUD
-        function resetOverlayTimer() {
+        // ==========================================
+        // GERENCIAMENTO DE CAMADAS PROGRESSIVAS & MOUSE INTELIGENTE
+        // ==========================================
+        let focusZone = 'rail'; // 'rail' | 'categories' | 'channels' | 'epg'
+
+        // Controles de Camadas: Rail -> Categorias -> Canais -> EPG
+        function openCategoriesLayer() {
+            const catCol = document.getElementById('categoryCol');
+            const railTvBtn = document.getElementById('railTvBtn');
+            if (catCol) catCol.classList.add('layer-active');
+            if (railTvBtn) railTvBtn.classList.add('active');
+            focusZone = 'categories';
+        }
+
+        function closeCategoriesLayer(e) {
+            if (e) { e.stopPropagation(); e.preventDefault(); }
+            const catCol = document.getElementById('categoryCol');
+            const chCol = document.getElementById('channelsCol');
+            const epgPanel = document.getElementById('nowPlayingPanel');
+            const railTvBtn = document.getElementById('railTvBtn');
+            if (catCol) catCol.classList.remove('layer-active');
+            if (chCol) chCol.classList.remove('layer-active');
+            if (epgPanel) epgPanel.classList.remove('visible');
+            if (railTvBtn) railTvBtn.classList.remove('active');
+            focusZone = 'rail';
+        }
+
+        function openChannelsLayer(catName) {
+            openCategoriesLayer();
+            const chCol = document.getElementById('channelsCol');
+            if (chCol) chCol.classList.add('layer-active');
+            if (catName) {
+                renderChannels(catName);
+            }
+            focusZone = 'channels';
+        }
+
+        function closeChannelsLayer(e) {
+            if (e) { e.stopPropagation(); e.preventDefault(); }
+            const chCol = document.getElementById('channelsCol');
+            const epgPanel = document.getElementById('nowPlayingPanel');
+            if (chCol) chCol.classList.remove('layer-active');
+            if (epgPanel) epgPanel.classList.remove('visible');
+            focusZone = 'categories';
+        }
+
+        function closeAllLayers() {
+            closeCategoriesLayer();
+        }
+
+        function toggleTvMenu(e) {
+            if (e) { e.stopPropagation(); e.preventDefault(); }
+            const catCol = document.getElementById('categoryCol');
+            if (catCol && catCol.classList.contains('layer-active')) {
+                closeCategoriesLayer(e);
+            } else {
+                openCategoriesLayer();
+                if (activeCategory) {
+                    openChannelsLayer(activeCategory);
+                }
+            }
+        }
+
+        function openFavoritesView() {
+            activeCategory = '⭐ Favoritos';
+            openCategoriesLayer();
+            openChannelsLayer('⭐ Favoritos');
+        }
+
+        function focusSearch() {
+            openCategoriesLayer();
+            const term = prompt('Buscar canal:');
+            if (term && term.trim()) {
+                const searchCat = 'Busca: ' + term.trim();
+                const matched = allChannels.filter(c => c.name.toLowerCase().includes(term.toLowerCase()));
+                activeCategory = searchCat;
+                openChannelsLayer();
+                const container = document.getElementById('channelCardsList');
+                document.getElementById('selectedCategoryTitle').innerText = searchCat.toUpperCase();
+                document.getElementById('channelCountBadge').innerText = matched.length;
+                if (matched.length === 0) {
+                    container.innerHTML = '<div style="color:var(--text-muted); padding:20px;">Nenhum canal encontrado.</div>';
+                    return;
+                }
+                let html = '';
+                matched.forEach(ch => {
+                    const isActive = (activeChannel && activeChannel.id === ch.id) ? ' active' : '';
+                    const isFav = favorites.includes(ch.id);
+                    html += '<div class="channel-card' + isActive + '" tabindex="0" id="card_' + ch.id + '" onclick="playChannelById(\\'' + ch.id + '\\')">' +
+                        '<div class="ch-logo-box"><img src="' + ch.logo + '" onerror="this.src=\\'https://raw.githubusercontent.com/iptv-org/iptv/master/assets/images/logo.png\\'"></div>' +
+                        '<div class="ch-details">' +
+                            '<div class="ch-name">' + ch.name + '</div>' +
+                            '<div class="ch-sub">' + (ch.group || 'Geral') + '</div>' +
+                        '</div>' +
+                        '<button onclick="event.stopPropagation(); toggleFavorite(\\'' + ch.id + '\\')" style="background:none; border:none; color:' + (isFav ? '#f59e0b' : '#64748b') + '; font-size:16px; cursor:pointer;">' + (isFav ? '★' : '☆') + '</button>' +
+                        '</div>';
+                });
+                container.innerHTML = html;
+            }
+        }
+
+        // Temporizador Inteligente: FICA ATIVO INDEFINIDAMENTE enquanto o mouse estiver sobre o menu
+        function resetOverlayTimer(delay = 6000) {
             const overlay = document.getElementById('tvOverlay');
+            if (!overlay) return;
             overlay.classList.remove('hidden');
+
+            // Se o mouse está sobre o menu, NUNCA fecha automaticamente!
+            if (isMouseOverMenu) {
+                if (overlayTimer) clearTimeout(overlayTimer);
+                overlayTimer = null;
+                return;
+            }
 
             if (overlayTimer) clearTimeout(overlayTimer);
             overlayTimer = setTimeout(() => {
-                overlay.classList.add('hidden');
-            }, 7000);
+                if (!isMouseOverMenu) {
+                    overlay.classList.add('hidden');
+                    closeAllLayers();
+                }
+            }, delay);
         }
 
-        function hideOverlayNow() {
-            document.getElementById('tvOverlay').classList.add('hidden');
+        function hideOverlayNow(e) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            if (overlayTimer) clearTimeout(overlayTimer);
+            const overlay = document.getElementById('tvOverlay');
+            if (overlay) overlay.classList.add('hidden');
+            closeAllLayers();
+        }
+
+        function toggleEpgPanel(force) {
+            const panel = document.getElementById('nowPlayingPanel');
+            const btnRail = document.getElementById('railEpgBtn');
+            const btnBottom = document.getElementById('btnEpgGuide');
+
+            const isVisible = (typeof force === 'boolean') ? force : !panel.classList.contains('visible');
+            if (isVisible) {
+                openChannelsLayer(activeCategory);
+                panel.classList.add('visible');
+                if (btnRail) btnRail.classList.add('active');
+                if (btnBottom) btnBottom.style.background = 'var(--primary)';
+                focusZone = 'epg';
+            } else {
+                panel.classList.remove('visible');
+                if (btnRail) btnRail.classList.remove('active');
+                if (btnBottom) btnBottom.style.background = 'transparent';
+                focusZone = 'channels';
+            }
+            resetOverlayTimer();
         }
 
         function showLoader(show, text) {
@@ -1644,6 +1918,7 @@ function renderWebTVApp(host) {
 
         function nextChannel() {
             const filtered = allChannels.filter(c => c.group === activeCategory);
+            if (filtered.length === 0) return;
             const curIdx = filtered.findIndex(c => c.id === activeChannel?.id);
             const nextIdx = (curIdx + 1) % filtered.length;
             playChannel(filtered[nextIdx]);
@@ -1651,13 +1926,14 @@ function renderWebTVApp(host) {
 
         function prevChannel() {
             const filtered = allChannels.filter(c => c.group === activeCategory);
+            if (filtered.length === 0) return;
             const curIdx = filtered.findIndex(c => c.id === activeChannel?.id);
             const prevIdx = (curIdx - 1 + filtered.length) % filtered.length;
             playChannel(filtered[prevIdx]);
         }
 
         function reloadCurrentStream() {
-            if (activeChannel) playChannel(activeChannel);
+            if (activeChannel) playChannel(activeChannel, true);
         }
 
         function toggleFullscreen() {
@@ -1668,64 +1944,199 @@ function renderWebTVApp(host) {
             }
         }
 
-        function toggleFavorite(id) {
-            if (favorites.includes(id)) {
-                favorites = favorites.filter(f => f !== id);
-            } else {
-                favorites.push(id);
-            }
-            localStorage.setItem('juggo_favorites', JSON.stringify(favorites));
-            renderChannels(activeCategory);
-        }
-
-        function toggleFavoriteCurrent() {
-            if (activeChannel) toggleFavorite(activeChannel.id);
-        }
-
-        function toggleFavorites() {
-            const favChannels = allChannels.filter(c => favorites.includes(c.id));
-            if (favChannels.length === 0) {
-                alert('Você ainda não adicionou nenhum canal aos favoritos! Clique na estrelinha de qualquer canal.');
-                return;
-            }
-            selectCategory('Favoritos');
-        }
-
-        function focusSearch() {
-            const q = prompt('Digite o nome do canal ou jogo:');
-            if (!q) return;
-            const found = allChannels.filter(c => c.name.toLowerCase().includes(q.toLowerCase()));
-            if (found.length > 0) {
-                playChannel(found[0]);
-            } else {
-                alert('Nenhum canal encontrado com "' + q + '"');
-            }
-        }
-
-        // Navegação Completa pelo Teclado (Setas Direita / Esquerda / Cima / Baixo)
         function setupEventListeners() {
-            window.addEventListener('mousemove', resetOverlayTimer);
-            window.addEventListener('click', resetOverlayTimer);
-            window.addEventListener('touchstart', resetOverlayTimer);
+            // Qualquer movimento do mouse na tela abre o overlay
+            const wakeUpHandler = (e) => {
+                const overlay = document.getElementById('tvOverlay');
+                if (overlay && overlay.classList.contains('hidden')) {
+                    overlay.classList.remove('hidden');
+                }
+                resetOverlayTimer();
+            };
 
+            ['mousemove', 'click', 'touchstart'].forEach(evt => {
+                window.addEventListener(evt, wakeUpHandler, { passive: true });
+                document.addEventListener(evt, wakeUpHandler, { passive: true });
+            });
+
+            // Se o usuário clicar no fundo da tela (vídeo) fora de qualquer painel, fecha imediatamente
+            const overlayEl = document.getElementById('tvOverlay');
+            if (overlayEl) {
+                overlayEl.addEventListener('click', (e) => {
+                    if (e.target.id === 'tvOverlay' || e.target.id === 'videoContainer' || e.target.id === 'webVideo') {
+                        hideOverlayNow(e);
+                    }
+                });
+            }
+
+            // Rastreamento para garantir que o menu NUNCA feche enquanto o mouse estiver sobre ele
+            const interactiveSelectors = '.tv-main-hud, .rail-nav, .category-col, .channels-col, .now-playing-panel, .bottom-player-bar, .tv-top-bar';
+            document.querySelectorAll(interactiveSelectors).forEach(el => {
+                const keepActive = () => {
+                    isMouseOverMenu = true;
+                    if (overlayTimer) {
+                        clearTimeout(overlayTimer);
+                        overlayTimer = null;
+                    }
+                };
+                el.addEventListener('mouseenter', keepActive);
+                el.addEventListener('mousemove', keepActive);
+                el.addEventListener('mouseleave', () => {
+                    isMouseOverMenu = false;
+                    resetOverlayTimer(5000);
+                });
+            });
+
+            // Teclado (Setas para TV / Controle Remoto)
             window.addEventListener('keydown', (e) => {
+                const overlay = document.getElementById('tvOverlay');
+                const isHidden = overlay.classList.contains('hidden');
+
+                // Se overlay estiver oculto, Setas Cima / Baixo trocam o canal direto estilo TV clássica
+                if (isHidden) {
+                    if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        nextChannel();
+                        return;
+                    } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        prevChannel();
+                        return;
+                    } else if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+                        e.preventDefault();
+                        overlay.classList.remove('hidden');
+                        openCategoriesLayer();
+                        openChannelsLayer(activeCategory);
+                        resetOverlayTimer();
+                        return;
+                    }
+                }
+
                 resetOverlayTimer();
 
                 if (e.key === 'ArrowRight') {
-                    // Direita: Foco na lista de canais
-                    const firstCard = document.querySelector('.channel-card');
-                    if (firstCard) firstCard.focus();
+                    e.preventDefault();
+                    if (focusZone === 'rail') {
+                        openCategoriesLayer();
+                        focusZone = 'categories';
+                        const activeCatEl = document.querySelector('.cat-item.active') || document.querySelector('.cat-item');
+                        if (activeCatEl) activeCatEl.focus();
+                    } else if (focusZone === 'categories') {
+                        openChannelsLayer(activeCategory);
+                        focusZone = 'channels';
+                        const activeCard = document.querySelector('.channel-card.active') || document.querySelector('.channel-card');
+                        if (activeCard) activeCard.focus();
+                    } else if (focusZone === 'channels') {
+                        toggleEpgPanel(true);
+                        focusZone = 'epg';
+                    }
                 } else if (e.key === 'ArrowLeft') {
-                    // Esquerda: Foco nas categorias
-                    const firstCat = document.querySelector('.cat-item');
-                    if (firstCat) firstCat.focus();
+                    e.preventDefault();
+                    if (focusZone === 'epg') {
+                        toggleEpgPanel(false);
+                        focusZone = 'channels';
+                        const activeCard = document.querySelector('.channel-card.active') || document.querySelector('.channel-card');
+                        if (activeCard) activeCard.focus();
+                    } else if (focusZone === 'channels') {
+                        closeChannelsLayer();
+                        focusZone = 'categories';
+                        const activeCatEl = document.querySelector('.cat-item.active') || document.querySelector('.cat-item');
+                        if (activeCatEl) activeCatEl.focus();
+                    } else if (focusZone === 'categories') {
+                        closeCategoriesLayer();
+                        focusZone = 'rail';
+                        const railBtn = document.getElementById('railTvBtn');
+                        if (railBtn) railBtn.focus();
+                    } else if (focusZone === 'rail') {
+                        hideOverlayNow();
+                    }
                 } else if (e.key === 'ArrowDown') {
                     e.preventDefault();
-                    nextChannel();
+                    if (focusZone === 'rail') {
+                        const railBtns = Array.from(document.querySelectorAll('.rail-btn'));
+                        const idx = railBtns.indexOf(document.activeElement);
+                        const nextBtn = railBtns[(idx + 1) % railBtns.length];
+                        if (nextBtn) nextBtn.focus();
+                    } else if (focusZone === 'categories') {
+                        const curIdx = categories.indexOf(activeCategory);
+                        const nextCat = categories[(curIdx + 1) % categories.length];
+                        selectCategory(nextCat);
+                        setTimeout(() => {
+                            const el = document.querySelector('.cat-item.active');
+                            if (el) el.focus();
+                        }, 50);
+                    } else if (focusZone === 'channels') {
+                        const cards = Array.from(document.querySelectorAll('.channel-card'));
+                        const focused = document.activeElement;
+                        const idx = cards.indexOf(focused);
+                        const nextCard = cards[(idx + 1) % cards.length];
+                        if (nextCard) {
+                            nextCard.focus();
+                            nextCard.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                        }
+                    }
                 } else if (e.key === 'ArrowUp') {
                     e.preventDefault();
-                    prevChannel();
-                } else if (e.key === ' ' || e.key === 'Enter') {
+                    if (focusZone === 'rail') {
+                        const railBtns = Array.from(document.querySelectorAll('.rail-btn'));
+                        const idx = railBtns.indexOf(document.activeElement);
+                        const prevBtn = railBtns[(idx - 1 + railBtns.length) % railBtns.length];
+                        if (prevBtn) prevBtn.focus();
+                    } else if (focusZone === 'categories') {
+                        const curIdx = categories.indexOf(activeCategory);
+                        const prevCat = categories[(curIdx - 1 + categories.length) % categories.length];
+                        selectCategory(prevCat);
+                        setTimeout(() => {
+                            const el = document.querySelector('.cat-item.active');
+                            if (el) el.focus();
+                        }, 50);
+                    } else if (focusZone === 'channels') {
+                        const cards = Array.from(document.querySelectorAll('.channel-card'));
+                        const focused = document.activeElement;
+                        const idx = cards.indexOf(focused);
+                        const prevCard = cards[(idx - 1 + cards.length) % cards.length];
+                        if (prevCard) {
+                            prevCard.focus();
+                            prevCard.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                        }
+                    }
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (focusZone === 'channels' && document.activeElement.classList.contains('channel-card')) {
+                        document.activeElement.click();
+                        setTimeout(() => { hideOverlayNow(); }, 2500);
+                    } else if (focusZone === 'categories') {
+                        focusZone = 'channels';
+                        openChannelsLayer(activeCategory);
+                        setTimeout(() => {
+                            const firstCh = document.querySelector('.channel-card');
+                            if (firstCh) firstCh.focus();
+                        }, 100);
+                    } else if (focusZone === 'rail') {
+                        if (document.activeElement) document.activeElement.click();
+                    }
+                } else if (e.key === 'Escape' || e.key === 'Backspace') {
+                    e.preventDefault();
+                    const futModal = document.getElementById('futebolModal');
+                    const csModal = document.getElementById('cs2Modal');
+                    if (futModal && futModal.style.display === 'flex') {
+                        futModal.style.display = 'none';
+                    } else if (csModal && csModal.style.display === 'flex') {
+                        csModal.style.display = 'none';
+                    } else if (focusZone === 'epg') {
+                        toggleEpgPanel(false);
+                        focusZone = 'channels';
+                    } else if (focusZone === 'channels') {
+                        closeChannelsLayer();
+                        focusZone = 'categories';
+                    } else if (focusZone === 'categories') {
+                        closeCategoriesLayer();
+                        focusZone = 'rail';
+                    } else {
+                        hideOverlayNow();
+                    }
+                } else if (e.key === ' ' && !e.target.matches('input, textarea')) {
+                    e.preventDefault();
                     togglePlay();
                 } else if (e.key === 'f' || e.key === 'F') {
                     toggleFullscreen();
@@ -2132,4 +2543,12 @@ server.listen(PORT, HOST, () => {
 
     // Iniciar agendadores autônomos (Jogos a cada 4h, Saúde dos canais a cada 4h, IA profunda a cada 48h)
     initAutonomousSchedulers({ channels, loadChannels });
+
+    // Pré-carregamento imediato no deploy (ESPN e CS2 Hub em RAM)
+    setTimeout(() => {
+        try {
+            footballHub.preloadAll();
+            cs2Hub.getCs2Data();
+        } catch(e) {}
+    }, 2000);
 });

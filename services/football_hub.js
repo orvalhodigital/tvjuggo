@@ -111,11 +111,37 @@ async function getLeagueData(leagueId) {
         console.error(`[SportsHub] Erro parse standings ${leagueId}:`, e.message);
     }
 
-    // Parse Matches
+    // Parse Matches - Coleta a rodada completa (hoje + próximas datas do calendário)
     const matches = [];
     try {
-        const events = scoreboardRaw?.events || [];
-        events.forEach(e => {
+        let allEvents = scoreboardRaw?.events ? [...scoreboardRaw.events] : [];
+
+        // Se houver calendário de rodada, puxar as próximas 4 datas com jogos para completar a rodada
+        if (scoreboardRaw?.leagues?.[0]?.calendar && scoreboardRaw.leagues[0].calendar.length > 0) {
+            const cal = scoreboardRaw.leagues[0].calendar;
+            const now = new Date();
+            const futureDates = cal
+                .map(d => d.slice(0, 10).replace(/-/g, ''))
+                .filter((d, idx, arr) => arr.indexOf(d) === idx)
+                .filter(d => {
+                    const dDate = new Date(d.slice(0,4) + '-' + d.slice(4,6) + '-' + d.slice(6,8));
+                    return dDate >= new Date(now.getTime() - 24 * 3600 * 1000);
+                })
+                .slice(0, 4);
+
+            const extraResults = await Promise.all(futureDates.map(dateStr => fetchJson(`${scoreboardUrl}?dates=${dateStr}`)));
+            extraResults.forEach(r => {
+                if (r?.events) {
+                    r.events.forEach(ev => {
+                        if (!allEvents.some(existing => existing.id === ev.id)) {
+                            allEvents.push(ev);
+                        }
+                    });
+                }
+            });
+        }
+
+        allEvents.forEach(e => {
             const comp = e.competitions?.[0];
             if (!comp) return;
 
@@ -164,11 +190,27 @@ async function getLeagueData(leagueId) {
     return data;
 }
 
+function clearCache() {
+    cache.clear();
+}
+
+async function preloadAll() {
+    console.log('[SportsHub] Pré-carregando ligas poliesportivas em segundo plano...');
+    for (const league of LEAGUES) {
+        try {
+            await getLeagueData(league.id);
+        } catch (e) {}
+    }
+    console.log('[SportsHub] Todas as ligas foram pré-carregadas com sucesso!');
+}
+
 function getAvailableLeagues() {
     return LEAGUES;
 }
 
 module.exports = {
     getAvailableLeagues,
-    getLeagueData
+    getLeagueData,
+    clearCache,
+    preloadAll
 };
