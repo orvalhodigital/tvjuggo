@@ -120,7 +120,25 @@ async function getLeagueData(leagueId) {
         if (scoreboardRaw?.leagues?.[0]?.calendar && scoreboardRaw.leagues[0].calendar.length > 0) {
             const cal = scoreboardRaw.leagues[0].calendar;
             const now = new Date();
-            const futureDates = cal
+
+            const extractDateStrings = (items) => {
+                const dates = [];
+                if (!Array.isArray(items)) return dates;
+                for (const item of items) {
+                    if (typeof item === 'string') {
+                        dates.push(item);
+                    } else if (item && typeof item === 'object') {
+                        if (typeof item.startDate === 'string') dates.push(item.startDate);
+                        else if (typeof item.date === 'string') dates.push(item.date);
+                        if (Array.isArray(item.entries)) dates.push(...extractDateStrings(item.entries));
+                    }
+                }
+                return dates;
+            };
+
+            const rawDates = extractDateStrings(cal);
+            const futureDates = rawDates
+                .filter(d => typeof d === 'string' && d.length >= 10)
                 .map(d => d.slice(0, 10).replace(/-/g, ''))
                 .filter((d, idx, arr) => arr.indexOf(d) === idx)
                 .filter(d => {
