@@ -1,0 +1,21 @@
+{
+  "name": "juggo-tv",
+  "version": "1.0.0",
+  "description": "Juggo TV - Servidor Autônomo de IPTV e VOD Cinema",
+  "main": "proxy_server.js",
+  "scripts": {
+    "start": "node proxy_server.js",
+    "atualizar-jogos": "node atualizar_jogos_do_dia.js"
+  },
+  "keywords": [
+    "iptv",
+    "m3u8",
+    "streaming",
+    "juggo-tv"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.4.5"
+  }
+}
