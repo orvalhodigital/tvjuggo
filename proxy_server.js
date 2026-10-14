@@ -267,15 +267,9 @@ async function handleHlsRequest(channel, req, res, queryQuality) {
                 lastSeen: Date.now()
             });
 
-            if (STREAM_MODE === 'REDIRECT' && hlsResult.finalUrl) {
-                res.writeHead(302, {
-                    'Location': hlsResult.finalUrl,
-                    'Access-Control-Allow-Origin': '*'
-                });
-                res.end();
-                return;
-            }
-
+            // Alta Estabilidade & Zero Custo de Banda:
+            // O servidor entrega a playlist .m3u8 resolvida (apenas 500 bytes de texto) para manter os tokens de autenticação sempre renovados.
+            // Os chunks pesados de vídeo (.ts) continuam sendo baixados DIRETAMENTE pelo usuário na CDN de origem, gerando 0 MB de consumo de vídeo na VPS.
             res.writeHead(200, {
                 'Content-Type': 'application/vnd.apple.mpegurl; charset=utf-8',
                 'Access-Control-Allow-Origin': '*',
@@ -310,15 +304,6 @@ async function handleHlsRequest(channel, req, res, queryQuality) {
                     quality: (queryQuality || 'HD') + ' (Reserva)',
                     lastSeen: Date.now()
                 });
-
-                if (STREAM_MODE === 'REDIRECT' && backupResult.finalUrl) {
-                    res.writeHead(302, {
-                        'Location': backupResult.finalUrl,
-                        'Access-Control-Allow-Origin': '*'
-                    });
-                    res.end();
-                    return;
-                }
 
                 res.writeHead(200, {
                     'Content-Type': 'application/vnd.apple.mpegurl; charset=utf-8',
@@ -540,16 +525,19 @@ function renderWebTVApp(host) {
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
         :root {
-            --bg-glass: rgba(8, 12, 22, 0.58);
-            --bg-card: rgba(16, 24, 42, 0.45);
-            --bg-card-active: rgba(37, 99, 235, 0.4);
-            --border-glass: rgba(255, 255, 255, 0.08);
-            --primary: #2563eb;
+            --bg-glass: rgba(10, 14, 24, 0.45);
+            --bg-card: rgba(18, 24, 38, 0.35);
+            --bg-card-hover: rgba(30, 42, 68, 0.55);
+            --bg-card-active: rgba(37, 99, 235, 0.35);
+            --border-glass: rgba(255, 255, 255, 0.06);
+            --border-focus: rgba(96, 165, 250, 0.45);
+            --primary: #3b82f6;
             --accent: #10b981;
             --gold: #f59e0b;
             --danger: #ef4444;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
+            --text-dim: #64748b;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', sans-serif; user-select: none; }
         html, body { width: 100vw; height: 100vh; overflow: hidden; background: #000; color: var(--text-main); }
@@ -602,8 +590,8 @@ function renderWebTVApp(host) {
             justify-content: space-between;
             pointer-events: auto;
             opacity: 1;
-            transition: opacity 0.35s ease;
-            background: linear-gradient(180deg, rgba(6, 8, 14, 0.6) 0%, rgba(6, 8, 14, 0.05) 45%, rgba(6, 8, 14, 0.75) 100%);
+            transition: opacity 0.3s ease;
+            background: linear-gradient(180deg, rgba(6, 8, 14, 0.55) 0%, rgba(6, 8, 14, 0.02) 40%, rgba(6, 8, 14, 0.65) 100%);
         }
         #tvOverlay.hidden {
             opacity: 0;
@@ -615,43 +603,64 @@ function renderWebTVApp(host) {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px 36px;
+            padding: 16px 32px;
         }
         .channel-watermark {
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 12px;
         }
         .channel-watermark img {
-            height: 40px;
-            max-width: 110px;
+            height: 36px;
+            max-width: 100px;
             object-fit: contain;
-            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6));
+            filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5));
+        }
+        .pulse-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 8px var(--accent);
+            animation: pulse-dot-anim 1.8s infinite ease-in-out;
+            display: inline-block;
+        }
+        @keyframes pulse-dot-anim {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.35; transform: scale(0.85); }
         }
         .widget-clock {
             display: flex;
             align-items: center;
-            gap: 18px;
-            font-size: 16px;
-            font-weight: 700;
+            gap: 14px;
+            font-size: 14px;
+            font-weight: 600;
             color: #fff;
-            background: rgba(10, 16, 28, 0.5);
-            backdrop-filter: blur(12px);
-            padding: 6px 18px;
-            border-radius: 30px;
+            background: rgba(10, 14, 24, 0.45);
+            backdrop-filter: blur(20px);
+            padding: 5px 14px;
+            border-radius: 20px;
             border: 1px solid var(--border-glass);
         }
+        .widget-clock a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            transition: color 0.2s;
+        }
+        .widget-clock a:hover { color: #fff; }
 
-        /* Center Main Menu HUD - Ocupa no máximo 60% da tela */
+        /* Center Main Menu HUD - Compacto e Sutil */
         .tv-main-hud {
             display: flex;
-            height: 65vh;
-            max-width: 62vw;
+            height: 62vh;
+            max-width: 58vw;
             width: fit-content;
             padding: 0 24px;
-            gap: 12px;
+            gap: 10px;
             align-items: stretch;
-            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             position: relative;
             z-index: 20;
         }
@@ -660,26 +669,26 @@ function renderWebTVApp(host) {
         .rail-nav {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
             background: var(--bg-glass);
-            backdrop-filter: blur(20px);
+            backdrop-filter: blur(28px) saturate(180%);
+            -webkit-backdrop-filter: blur(28px) saturate(180%);
             border: 1px solid var(--border-glass);
-            border-radius: 20px;
-            padding: 14px 8px;
+            border-radius: 18px;
+            padding: 10px 6px;
             flex-shrink: 0;
-            width: 56px;
+            width: 48px;
             align-items: center;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
             z-index: 25;
         }
         .rail-btn {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
             border: none;
             background: transparent;
             color: var(--text-muted);
-            font-size: 18px;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -687,10 +696,17 @@ function renderWebTVApp(host) {
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             outline: none;
         }
+        .rail-btn svg {
+            width: 18px;
+            height: 18px;
+            transition: transform 0.2s;
+        }
         .rail-btn:hover, .rail-btn:focus, .rail-btn.active {
             background: var(--primary);
             color: #fff;
-            box-shadow: 0 0 16px rgba(37, 99, 235, 0.6);
+            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.45);
+        }
+        .rail-btn:hover svg {
             transform: scale(1.1);
         }
 
@@ -704,32 +720,34 @@ function renderWebTVApp(host) {
             margin: 0;
             border: none;
             background: var(--bg-glass);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
+            backdrop-filter: blur(28px) saturate(180%);
+            -webkit-backdrop-filter: blur(28px) saturate(180%);
+            border-radius: 18px;
             display: flex;
             flex-direction: column;
-            gap: 6px;
-            transition: width 0.32s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease, padding 0.32s ease;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+            gap: 4px;
+            transition: width 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease, padding 0.28s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
             flex-shrink: 0;
             z-index: 24;
         }
         .category-col.layer-active {
-            width: 220px;
+            width: 200px;
             opacity: 1;
             pointer-events: auto;
-            padding: 16px 12px;
+            padding: 12px 10px;
             border: 1px solid var(--border-glass);
             overflow-y: auto;
         }
         .col-title {
-            font-size: 13px;
-            font-weight: 800;
-            color: #fff;
-            letter-spacing: 0.5px;
-            padding: 0 6px 10px 6px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            padding: 0 4px 8px 4px;
             border-bottom: 1px solid var(--border-glass);
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -737,33 +755,45 @@ function renderWebTVApp(host) {
         .cat-item {
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 10px 12px;
-            border-radius: 12px;
+            gap: 8px;
+            padding: 8px 10px;
+            border-radius: 10px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.18s;
             color: var(--text-muted);
-            font-weight: 600;
-            font-size: 13px;
+            font-weight: 500;
+            font-size: 12.5px;
             outline: none;
         }
         .cat-item:hover, .cat-item.active {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.08);
             color: #fff;
-            transform: translateX(4px);
+            transform: translateX(3px);
         }
         .cat-item:focus {
             outline: none;
-            border-color: #60a5fa !important;
-            background: rgba(37, 99, 235, 0.3) !important;
-            box-shadow: 0 0 14px rgba(37, 99, 235, 0.5);
+            background: rgba(59, 130, 246, 0.25) !important;
+            border-color: var(--primary);
             color: #fff;
         }
         .cat-item.active {
-            background: linear-gradient(90deg, rgba(37, 99, 235, 0.45), rgba(37, 99, 235, 0.15));
-            border-left: 3px solid var(--primary);
+            background: linear-gradient(90deg, rgba(59, 130, 246, 0.35), rgba(59, 130, 246, 0.08));
+            border-left: 2.5px solid var(--primary);
+            color: #fff;
+            font-weight: 600;
         }
-        .cat-icon { font-size: 16px; }
+        .cat-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+        .cat-item.active .cat-icon, .cat-item:hover .cat-icon {
+            color: #93c5fd;
+        }
 
         /* Camada 3: Coluna de Canais (Abre em cascata/camada) */
         .channels-col {
@@ -775,68 +805,106 @@ function renderWebTVApp(host) {
             margin: 0;
             border: none;
             background: var(--bg-glass);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
+            backdrop-filter: blur(28px) saturate(180%);
+            -webkit-backdrop-filter: blur(28px) saturate(180%);
+            border-radius: 18px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            transition: width 0.32s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease, padding 0.32s ease;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+            gap: 6px;
+            transition: width 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease, padding 0.28s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
             flex-shrink: 0;
             z-index: 23;
         }
         .channels-col.layer-active {
-            width: 320px;
+            width: 295px;
             opacity: 1;
             pointer-events: auto;
-            padding: 16px 14px;
+            padding: 12px 10px;
             border: 1px solid var(--border-glass);
             overflow-y: auto;
         }
+        .channel-search-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-glass);
+            border-radius: 10px;
+            padding: 6px 10px;
+            margin-bottom: 6px;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .channel-search-box:focus-within {
+            border-color: var(--border-focus);
+            background: rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 12px rgba(59, 130, 246, 0.2);
+        }
+        .channel-search-box input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #fff;
+            font-size: 12px;
+            width: 100%;
+        }
+        .channel-search-box input::placeholder {
+            color: var(--text-dim);
+        }
+        .search-clear-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            font-size: 11px;
+            padding: 0 2px;
+            display: flex;
+            align-items: center;
+        }
+        .search-clear-btn:hover { color: #fff; }
         .channel-card {
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 10px;
             background: var(--bg-card);
             border: 1px solid var(--border-glass);
-            border-radius: 14px;
-            padding: 10px 14px;
+            border-radius: 12px;
+            padding: 8px 10px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.18s;
             position: relative;
             outline: none;
         }
         .channel-card:hover, .channel-card:focus {
-            border-color: rgba(96, 165, 250, 0.6);
-            background: rgba(28, 38, 64, 0.7);
-            transform: scale(1.02);
-            box-shadow: 0 0 14px rgba(37, 99, 235, 0.35);
+            border-color: var(--border-focus);
+            background: var(--bg-card-hover);
+            transform: translateX(2px);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
         }
         .channel-card.active {
             background: var(--bg-card-active);
             border-color: var(--primary);
-            box-shadow: 0 0 18px rgba(37, 99, 235, 0.4);
+            box-shadow: 0 0 16px rgba(59, 130, 246, 0.35);
         }
         .channel-card.active::before {
             content: '';
             position: absolute;
             left: 0;
-            top: 20%;
-            height: 60%;
-            width: 3px;
+            top: 25%;
+            height: 50%;
+            width: 2.5px;
             background: #fff;
-            border-radius: 0 4px 4px 0;
-            box-shadow: 0 0 8px #fff;
+            border-radius: 0 3px 3px 0;
         }
         .ch-logo-box {
-            width: 48px;
-            height: 48px;
-            border-radius: 10px;
-            background: rgba(0, 0, 0, 0.5);
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.45);
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 4px;
+            padding: 3px;
             flex-shrink: 0;
         }
         .ch-logo-box img {
@@ -845,30 +913,50 @@ function renderWebTVApp(host) {
             object-fit: contain;
         }
         .ch-details { flex: 1; overflow: hidden; }
-        .ch-name { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .ch-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-        .ch-badges { display: flex; gap: 6px; margin-top: 4px; }
+        .ch-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff; }
+        .ch-sub { font-size: 10.5px; color: var(--text-dim); margin-top: 1px; }
+        .ch-badges { display: flex; gap: 4px; margin-top: 3px; }
         .badge {
-            font-size: 10px;
-            font-weight: 800;
-            padding: 2px 6px;
-            border-radius: 4px;
-            background: rgba(255, 255, 255, 0.1);
+            font-size: 9px;
+            font-weight: 700;
+            padding: 1px 5px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.08);
             color: #cbd5e1;
+            letter-spacing: 0.3px;
         }
-        .badge.hd { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
-        .badge.live { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+        .badge.hd { background: rgba(59, 130, 246, 0.18); color: #93c5fd; }
+        .badge.live { background: rgba(239, 68, 68, 0.18); color: #fca5a5; }
+        .ch-fav-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px;
+            border-radius: 6px;
+            transition: color 0.18s, transform 0.18s;
+        }
+        .ch-fav-btn:hover {
+            color: var(--gold);
+            transform: scale(1.15);
+        }
+        .ch-fav-btn.is-fav {
+            color: var(--gold);
+        }
 
         /* Botões de controle de camada (Voltar / Fechar) */
         .layer-ctrl-btn {
-            background: rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.06);
             border: 1px solid var(--border-glass);
             color: var(--text-muted);
-            border-radius: 8px;
-            padding: 3px 8px;
+            border-radius: 6px;
+            padding: 2px 6px;
             cursor: pointer;
-            font-size: 12px;
-            font-weight: 700;
+            font-size: 11px;
+            font-weight: 600;
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -876,97 +964,110 @@ function renderWebTVApp(host) {
             outline: none;
         }
         .layer-ctrl-btn:hover, .layer-ctrl-btn:focus {
-            background: rgba(255, 255, 255, 0.22);
+            background: rgba(255, 255, 255, 0.18);
             color: #fff;
-            border-color: rgba(255, 255, 255, 0.4);
+            border-color: rgba(255, 255, 255, 0.3);
         }
 
         /* Camada 4: Now Playing & EPG Details */
         .now-playing-panel {
-            width: 300px;
+            width: 280px;
             height: 100%;
             background: var(--bg-glass);
-            backdrop-filter: blur(20px);
+            backdrop-filter: blur(28px) saturate(180%);
+            -webkit-backdrop-filter: blur(28px) saturate(180%);
             border: 1px solid var(--border-glass);
-            border-radius: 20px;
-            padding: 22px;
+            border-radius: 18px;
+            padding: 18px;
             display: none;
             flex-direction: column;
             justify-content: space-between;
-            transition: all 0.32s cubic-bezier(0.16, 1, 0.3, 1);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+            transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
             flex-shrink: 0;
             z-index: 22;
         }
         .now-playing-panel.visible {
             display: flex;
         }
-        .np-label { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
-        .np-title { font-size: 22px; font-weight: 900; color: #fff; margin: 8px 0; line-height: 1.2; }
-        .np-desc { font-size: 13px; color: #cbd5e1; line-height: 1.5; max-height: 110px; overflow-y: auto; }
-        .np-progress-box { margin-top: 18px; }
-        .progress-bar { width: 100%; height: 5px; background: rgba(255, 255, 255, 0.15); border-radius: 10px; overflow: hidden; }
+        .np-label { font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+        .np-title { font-size: 20px; font-weight: 800; color: #fff; margin: 6px 0; line-height: 1.25; }
+        .np-desc { font-size: 12.5px; color: #cbd5e1; line-height: 1.5; max-height: 100px; overflow-y: auto; }
+        .np-progress-box { margin-top: 14px; }
+        .progress-bar { width: 100%; height: 4px; background: rgba(255, 255, 255, 0.12); border-radius: 10px; overflow: hidden; }
         .progress-fill { width: 45%; height: 100%; background: var(--primary); border-radius: 10px; }
-        .progress-times { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+        .progress-times { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--text-dim); margin-top: 5px; }
 
         /* Bottom Player Bar */
         .bottom-player-bar {
-            background: rgba(8, 12, 20, 0.55);
-            backdrop-filter: blur(16px);
+            background: rgba(8, 12, 20, 0.45);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
             border-top: 1px solid var(--border-glass);
-            padding: 12px 36px;
+            padding: 8px 32px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        .bot-left { display: flex; align-items: center; gap: 16px; }
+        .bot-left { display: flex; align-items: center; gap: 14px; }
         .live-tag {
-            background: var(--danger);
-            color: #fff;
-            padding: 4px 10px;
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            padding: 3px 8px;
             border-radius: 6px;
-            font-size: 11px;
-            font-weight: 900;
-            letter-spacing: 0.5px;
-            animation: pulse 2s infinite;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
-        .bot-program { font-size: 16px; font-weight: 800; color: #fff; }
-        .bot-channel { font-size: 13px; color: var(--text-muted); }
+        .bot-program { font-size: 15px; font-weight: 700; color: #fff; }
+        .bot-channel { font-size: 12px; color: var(--text-dim); }
 
-        .bot-center { display: flex; align-items: center; gap: 20px; }
+        .bot-center { display: flex; align-items: center; gap: 12px; }
         .media-btn {
-            background: rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.06);
             border: 1px solid var(--border-glass);
-            color: #fff;
-            width: 44px;
-            height: 44px;
+            color: var(--text-muted);
+            width: 38px;
+            height: 38px;
             border-radius: 50%;
             cursor: pointer;
-            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            outline: none;
+        }
+        .media-btn svg { width: 17px; height: 17px; }
+        .media-btn:hover { background: rgba(255, 255, 255, 0.15); color: #fff; transform: scale(1.06); }
+        .media-btn.play-pause {
+            width: 46px;
+            height: 46px;
+            background: var(--primary);
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+        }
+        .media-btn.play-pause svg { width: 19px; height: 19px; }
+
+        .bot-right { display: flex; align-items: center; gap: 8px; }
+        .action-icon {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: all 0.2s;
         }
-        .media-btn:hover { background: rgba(255, 255, 255, 0.2); transform: scale(1.08); }
-        .media-btn.play-pause {
-            width: 54px;
-            height: 54px;
-            background: var(--primary);
-            box-shadow: 0 0 16px rgba(37, 99, 235, 0.4);
-        }
-
-        .bot-right { display: flex; align-items: center; gap: 14px; }
-        .action-icon {
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            font-size: 20px;
-            cursor: pointer;
-            transition: color 0.2s;
-        }
-        .action-icon:hover { color: #fff; }
+        .action-icon svg { width: 17px; height: 17px; }
+        .action-icon:hover { color: #fff; background: rgba(255, 255, 255, 0.08); }
 
         /* FUTEBOL HUB MODAL */
         #futebolModal {
@@ -1213,15 +1314,18 @@ function renderWebTVApp(host) {
             <div class="channel-watermark">
                 <img id="topChannelLogo" src="https://raw.githubusercontent.com/iptv-org/iptv/master/assets/images/logo.png" alt="Logo">
                 <div>
-                    <div style="font-size: 18px; font-weight: 800;" id="topChannelName">Juggo TV</div>
-                    <div style="font-size: 13px; color: var(--accent); font-weight: 700;">🟢 Transmissão Ao Vivo</div>
+                    <div style="font-size: 17px; font-weight: 800;" id="topChannelName">Juggo TV</div>
+                    <div style="font-size: 12px; color: var(--accent); font-weight: 600; display:flex; align-items:center; gap:6px;">
+                        <span class="pulse-dot"></span> Transmissão Ao Vivo
+                    </div>
                 </div>
             </div>
 
             <div class="widget-clock">
-                <span>☀️ 29°C</span>
                 <span id="liveClock">14:45</span>
-                <a href="/admin" target="_blank" style="text-decoration: none; font-size: 16px; color: #94a3b8;" title="Painel de Controle">⚙️</a>
+                <a href="/admin" target="_blank" title="Painel de Controle">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                </a>
             </div>
         </div>
 
@@ -1229,23 +1333,39 @@ function renderWebTVApp(host) {
         <div class="tv-main-hud">
             <!-- Camada 1: Rail Principal de Ícones -->
             <div class="rail-nav">
-                <button class="rail-btn active" id="railTvBtn" onmouseenter="openCategoriesLayer()" onclick="toggleTvMenu(event)" title="Canais Ao Vivo (Camadas)">📺</button>
-                <button class="rail-btn" id="railFutBtn" onclick="toggleFutebolHub()" title="Central Poliesportiva (Futebol, Basquete, Vôlei, NFL)">🏆</button>
-                <button class="rail-btn" id="railCsBtn" onclick="toggleCs2Hub()" title="CS2 & Esports Hub (HLTV & Multi-Streams)">🎯</button>
-                <button class="rail-btn" id="railEpgBtn" onclick="toggleEpgPanel()" title="Guia de Programação (EPG)">📅</button>
-                <button class="rail-btn" id="railFavBtn" onclick="openFavoritesView()" title="Favoritos">⭐</button>
-                <button class="rail-btn" id="railSearchBtn" onclick="focusSearch()" title="Buscar Canal">🔍</button>
+                <button class="rail-btn active" id="railTvBtn" onmouseenter="openCategoriesLayer()" onclick="toggleTvMenu(event)" title="Canais Ao Vivo">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="1.8" fill="none"><rect x="2" y="7" width="20" height="15" rx="3"/><polyline points="17 2 12 7 7 2"/></svg>
+                </button>
+                <button class="rail-btn" id="railFutBtn" onclick="toggleFutebolHub()" title="Central Poliesportiva (Futebol, Basquete, NFL)">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="1.8" fill="none"><path d="M6 9H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h2"/><path d="M18 9h2a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-2"/><path d="M4 3h16v6a8 8 0 0 1-16 0V3z"/><path d="M12 17v4"/><path d="M8 21h8"/></svg>
+                </button>
+                <button class="rail-btn" id="railCsBtn" onclick="toggleCs2Hub()" title="CS2 & Esports Hub">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="1.8" fill="none"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+                </button>
+                <button class="rail-btn" id="railEpgBtn" onclick="toggleEpgPanel()" title="Guia de Programação (EPG)">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="1.8" fill="none"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                </button>
+                <button class="rail-btn" id="railFavBtn" onclick="openFavoritesView()" title="Favoritos">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="1.8" fill="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                </button>
+                <button class="rail-btn" id="railSearchBtn" onclick="focusSearch()" title="Buscar Canal">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="1.8" fill="none"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </button>
                 <div style="flex:1;"></div>
-                <button class="rail-btn" onclick="hideOverlayNow(event)" title="Ocultar Menus" style="color:var(--text-muted); font-size:16px;">⌄</button>
+                <button class="rail-btn" onclick="hideOverlayNow(event)" title="Ocultar Menus">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
             </div>
 
             <!-- Camada 2: Coluna de Categorias (Abre em cascata) -->
             <div class="category-col" id="categoryCol">
                 <div class="col-title">
-                    <span style="font-size: 13px; font-weight: 800; letter-spacing: 0.5px;">CATEGORIAS</span>
+                    <span>CATEGORIAS</span>
                     <div style="display:flex; align-items:center; gap:6px;">
-                        <span id="catTotalBadge" style="font-size: 11px; color: #93c5fd; font-weight: 700;">...</span>
-                        <button onclick="closeCategoriesLayer(event)" class="layer-ctrl-btn" title="Recolher Categorias">◂</button>
+                        <span id="catTotalBadge" style="font-size: 11px; color: #93c5fd; font-weight: 600;">...</span>
+                        <button onclick="closeCategoriesLayer(event)" class="layer-ctrl-btn" title="Recolher Categorias">
+                            <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><polyline points="15 18 9 12 15 6"/></svg>
+                        </button>
                     </div>
                 </div>
                 <div id="categoriesList">Carregando...</div>
@@ -1254,11 +1374,20 @@ function renderWebTVApp(host) {
             <!-- Camada 3: Coluna de Canais (Abre em cascata) -->
             <div class="channels-col" id="channelsCol">
                 <div class="col-title">
-                    <div style="display:flex; align-items:center; gap:8px; overflow:hidden;">
-                        <button onclick="closeChannelsLayer(event)" class="layer-ctrl-btn" title="Voltar para Categorias">←</button>
-                        <span id="selectedCategoryTitle" style="text-overflow:ellipsis; overflow:hidden; white-space:nowrap; font-size:13px;">CANAIS</span>
+                    <div style="display:flex; align-items:center; gap:6px; overflow:hidden;">
+                        <button onclick="closeChannelsLayer(event)" class="layer-ctrl-btn" title="Voltar para Categorias">
+                            <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><polyline points="15 18 9 12 15 6"/></svg>
+                        </button>
+                        <span id="selectedCategoryTitle" style="text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">CANAIS</span>
                     </div>
-                    <span id="channelCountBadge" style="font-size: 11px; color: var(--text-muted); font-weight: 700;">0</span>
+                    <span id="channelCountBadge" style="font-size: 11px; color: var(--text-dim); font-weight: 600;">0</span>
+                </div>
+                <div class="channel-search-box">
+                    <span style="display:flex; align-items:center; color:var(--text-dim);">
+                        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    </span>
+                    <input type="text" id="channelSearchInput" placeholder="Buscar canal..." oninput="onSearchChannelInput(this.value)" autocomplete="off">
+                    <button id="clearSearchBtn" onclick="clearChannelSearch()" class="search-clear-btn" style="display:none;">✕</button>
                 </div>
                 <div id="channelCardsList">Selecione uma categoria</div>
             </div>
@@ -1286,10 +1415,10 @@ function renderWebTVApp(host) {
             </div>
         </div>
 
-        <!-- Bottom Player Controls Bar (Photo 2) -->
+        <!-- Bottom Player Controls Bar -->
         <div class="bottom-player-bar">
             <div class="bot-left">
-                <span class="live-tag">LIVE</span>
+                <span class="live-tag"><span class="pulse-dot"></span> LIVE</span>
                 <div>
                     <div class="bot-program" id="botProgramTitle">Transmissão em Direto</div>
                     <div class="bot-channel" id="botChannelName">Canal Sintonizado</div>
@@ -1297,18 +1426,36 @@ function renderWebTVApp(host) {
             </div>
 
             <div class="bot-center">
-                <button class="media-btn" onclick="prevChannel()" title="Canal Anterior">⏮</button>
-                <button class="media-btn play-pause" id="btnPlayPause" onclick="togglePlay()" title="Play / Pause">⏸</button>
-                <button class="media-btn" onclick="nextChannel()" title="Próximo Canal">⏭</button>
-                <button class="media-btn" id="btnEpgGuide" onclick="toggleEpgPanel()" title="Ver Programação (EPG)">📅</button>
-                <button class="media-btn" onclick="hideOverlayNow(event)" title="Ocultar Menus">⌄</button>
+                <button class="media-btn" onclick="prevChannel()" title="Canal Anterior">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg>
+                </button>
+                <button class="media-btn play-pause" id="btnPlayPause" onclick="togglePlay()" title="Play / Pause">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
+                </button>
+                <button class="media-btn" onclick="nextChannel()" title="Próximo Canal">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+                </button>
+                <button class="media-btn" id="btnEpgGuide" onclick="toggleEpgPanel()" title="Ver Programação (EPG)">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.8" fill="none"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                </button>
+                <button class="media-btn" onclick="hideOverlayNow(event)" title="Ocultar Menus">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
             </div>
 
             <div class="bot-right">
-                <button class="action-icon" style="color: #38bdf8;" onclick="unfreezeStream()" title="⚡ Recarregar Sinal">⚡</button>
-                <button class="action-icon" onclick="reloadCurrentStream()" title="Recarregar Canal">↻</button>
-                <button class="action-icon" onclick="toggleFavoriteCurrent()" id="btnFavCurrent" title="Favoritar">⭐</button>
-                <button class="action-icon" onclick="toggleFullscreen()" title="Tela Cheia">⛶</button>
+                <button class="action-icon" style="color: #38bdf8;" onclick="unfreezeStream()" title="⚡ Sincronizar Borda Ao Vivo">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                </button>
+                <button class="action-icon" onclick="reloadCurrentStream()" title="Recarregar Canal">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                </button>
+                <button class="action-icon" onclick="toggleFavoriteCurrent()" id="btnFavCurrent" title="Favoritar">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.8" fill="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                </button>
+                <button class="action-icon" onclick="toggleFullscreen()" title="Tela Cheia">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                </button>
             </div>
         </div>
     </div>
@@ -1406,6 +1553,19 @@ function renderWebTVApp(host) {
     </div>
 
     <script>
+        const ICONS = {
+            tv: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.8" fill="none"><rect x="2" y="7" width="20" height="15" rx="3"/><polyline points="17 2 12 7 7 2"/></svg>',
+            ball: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.8" fill="none"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>',
+            film: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.8" fill="none"><rect x="2" y="2" width="20" height="20" rx="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg>',
+            news: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.8" fill="none"><path d="M19 20H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1m2 13a2 2 0 0 1-2-2V7m2 13a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2m-4-3H9"/></svg>',
+            kids: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.8" fill="none"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>',
+            globe: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.8" fill="none"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
+            star: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.8" fill="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+            starFilled: '<svg viewBox="0 0 24 24" width="16" height="16" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+            play: '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><polygon points="6 4 18 12 6 20 6 4"/></svg>',
+            pause: '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>'
+        };
+
         let allChannels = [];
         let categories = [];
         let activeCategory = '⚽ Jogos do Dia';
@@ -1413,6 +1573,7 @@ function renderWebTVApp(host) {
         let activeIndex = 0;
         let hlsPlayer = null;
         let overlayTimer = null;
+        let currentSearchQuery = '';
         let favorites = JSON.parse(localStorage.getItem('juggo_favorites') || '[]');
 
         // Inicialização
@@ -1467,19 +1628,23 @@ function renderWebTVApp(host) {
             categories.forEach(cat => {
                 const isActive = (cat === activeCategory) ? ' active' : '';
                 const count = allChannels.filter(c => c.group === cat).length;
-                let icon = '📺';
-                if (cat.includes('Jogos') || cat.includes('Esporte')) icon = '⚽';
-                else if (cat.includes('Aberto')) icon = '🇧🇷';
-                else if (cat.includes('Filme') || cat.includes('Série')) icon = '🎬';
-                else if (cat.includes('Notícia')) icon = '📰';
-                else if (cat.includes('Infantil') || cat.includes('Kids')) icon = '👶';
-                else if (cat.includes('Doc') || cat.includes('Variedade')) icon = '🦁';
+                let iconSvg = ICONS.tv;
+                const lower = cat.toLowerCase();
+                if (lower.includes('jogo') || lower.includes('esporte') || lower.includes('futebol')) iconSvg = ICONS.ball;
+                else if (lower.includes('aberto')) iconSvg = ICONS.tv;
+                else if (lower.includes('filme') || lower.includes('série')) iconSvg = ICONS.film;
+                else if (lower.includes('notícia') || lower.includes('news')) iconSvg = ICONS.news;
+                else if (lower.includes('infantil') || lower.includes('kids')) iconSvg = ICONS.kids;
+                else if (lower.includes('doc') || lower.includes('variedade')) iconSvg = ICONS.globe;
+                else if (lower.includes('favorito')) iconSvg = ICONS.starFilled;
+
+                const cleanName = cat.replace(/[⚽🇧🇷🎬📰👶🦁⭐]/g, '').trim();
 
                 html += '<div class="cat-item' + isActive + '" tabindex="0" ' +
                     'onmouseenter="selectCategory(\\'' + escapeJs(cat) + '\\')" ' +
                     'onclick="selectCategory(\\'' + escapeJs(cat) + '\\')">' +
-                    '<span class="cat-icon">' + icon + '</span>' +
-                    '<span style="flex:1; overflow:hidden; text-overflow:ellipsis;">' + cat + '</span>' +
+                    '<span class="cat-icon">' + iconSvg + '</span>' +
+                    '<span style="flex:1; overflow:hidden; text-overflow:ellipsis;">' + (cleanName || cat) + '</span>' +
                     '<span style="font-size:11px; opacity:0.6;">' + count + '</span>' +
                     '</div>';
             });
@@ -1493,27 +1658,52 @@ function renderWebTVApp(host) {
             resetOverlayTimer();
         }
 
-        function renderChannels(cat) {
+        function onSearchChannelInput(val) {
+            currentSearchQuery = (val || '').trim().toLowerCase();
+            const clearBtn = document.getElementById('clearSearchBtn');
+            if (clearBtn) clearBtn.style.display = currentSearchQuery ? 'flex' : 'none';
+            renderChannels(activeCategory, currentSearchQuery);
+        }
+
+        function clearChannelSearch() {
+            const input = document.getElementById('channelSearchInput');
+            if (input) {
+                input.value = '';
+                input.focus();
+            }
+            onSearchChannelInput('');
+        }
+
+        function renderChannels(cat, query = '') {
             const container = document.getElementById('channelCardsList');
-            document.getElementById('selectedCategoryTitle').innerText = (cat || 'CANAIS').replace('⭐ ', '').toUpperCase();
-            
+            const cleanCatTitle = (cat || 'CANAIS').replace(/[⚽🇧🇷🎬📰👶🦁⭐]/g, '').trim().toUpperCase();
+            document.getElementById('selectedCategoryTitle').innerText = cleanCatTitle || 'CANAIS';
+
             let filtered = [];
             if (cat && cat.includes('Favorito')) {
                 filtered = allChannels.filter(c => favorites.includes(c.id));
-            } else {
+            } else if (cat) {
                 filtered = allChannels.filter(c => c.group === cat);
+            } else {
+                filtered = allChannels;
             }
+
+            if (query) {
+                filtered = filtered.filter(c => c.name.toLowerCase().includes(query) || (c.group && c.group.toLowerCase().includes(query)));
+            }
+
             document.getElementById('channelCountBadge').innerText = filtered.length;
 
             if (filtered.length === 0) {
-                container.innerHTML = '<div style="color:var(--text-muted); padding:20px;">Nenhum canal nesta categoria.</div>';
+                container.innerHTML = '<div style="color:var(--text-muted); padding:20px; text-align:center; font-size:13px;">Nenhum canal encontrado.</div>';
                 return;
             }
 
             let html = '';
-            filtered.forEach((ch, idx) => {
+            filtered.forEach((ch) => {
                 const isActive = (activeChannel && activeChannel.id === ch.id) ? ' active' : '';
                 const isFav = favorites.includes(ch.id);
+                const starIcon = isFav ? ICONS.starFilled : ICONS.star;
 
                 html += '<div class="channel-card' + isActive + '" tabindex="0" id="card_' + ch.id + '" onclick="playChannelById(\\'' + ch.id + '\\')">' +
                     '<div class="ch-logo-box"><img src="' + ch.logo + '" onerror="this.src=\\'https://raw.githubusercontent.com/iptv-org/iptv/master/assets/images/logo.png\\'"></div>' +
@@ -1525,7 +1715,9 @@ function renderWebTVApp(host) {
                             (ch.name.includes('⚽') || (cat && cat.includes('Jogos')) ? '<span class="badge live">LIVE</span>' : '') +
                         '</div>' +
                     '</div>' +
-                    '<button onclick="event.stopPropagation(); toggleFavorite(\\'' + ch.id + '\\')" style="background:none; border:none; color:' + (isFav ? '#f59e0b' : '#64748b') + '; font-size:16px; cursor:pointer;">' + (isFav ? '★' : '☆') + '</button>' +
+                    '<button class="ch-fav-btn' + (isFav ? ' is-fav' : '') + '" onclick="event.stopPropagation(); toggleFavorite(\\'' + ch.id + '\\')" title="' + (isFav ? 'Remover dos favoritos' : 'Adicionar aos favoritos') + '">' +
+                        starIcon +
+                    '</button>' +
                     '</div>';
             });
             container.innerHTML = html;
@@ -1813,38 +2005,18 @@ function renderWebTVApp(host) {
 
         function focusSearch() {
             openCategoriesLayer();
-            const term = prompt('Buscar canal:');
-            if (term && term.trim()) {
-                const searchCat = 'Busca: ' + term.trim();
-                const matched = allChannels.filter(c => c.name.toLowerCase().includes(term.toLowerCase()));
-                activeCategory = searchCat;
-                openChannelsLayer();
-                const container = document.getElementById('channelCardsList');
-                document.getElementById('selectedCategoryTitle').innerText = searchCat.toUpperCase();
-                document.getElementById('channelCountBadge').innerText = matched.length;
-                if (matched.length === 0) {
-                    container.innerHTML = '<div style="color:var(--text-muted); padding:20px;">Nenhum canal encontrado.</div>';
-                    return;
+            openChannelsLayer(activeCategory);
+            setTimeout(() => {
+                const input = document.getElementById('channelSearchInput');
+                if (input) {
+                    input.focus();
+                    input.select();
                 }
-                let html = '';
-                matched.forEach(ch => {
-                    const isActive = (activeChannel && activeChannel.id === ch.id) ? ' active' : '';
-                    const isFav = favorites.includes(ch.id);
-                    html += '<div class="channel-card' + isActive + '" tabindex="0" id="card_' + ch.id + '" onclick="playChannelById(\\'' + ch.id + '\\')">' +
-                        '<div class="ch-logo-box"><img src="' + ch.logo + '" onerror="this.src=\\'https://raw.githubusercontent.com/iptv-org/iptv/master/assets/images/logo.png\\'"></div>' +
-                        '<div class="ch-details">' +
-                            '<div class="ch-name">' + ch.name + '</div>' +
-                            '<div class="ch-sub">' + (ch.group || 'Geral') + '</div>' +
-                        '</div>' +
-                        '<button onclick="event.stopPropagation(); toggleFavorite(\\'' + ch.id + '\\')" style="background:none; border:none; color:' + (isFav ? '#f59e0b' : '#64748b') + '; font-size:16px; cursor:pointer;">' + (isFav ? '★' : '☆') + '</button>' +
-                        '</div>';
-                });
-                container.innerHTML = html;
-            }
+            }, 120);
         }
 
         // Temporizador Inteligente: FICA ATIVO INDEFINIDAMENTE enquanto o mouse estiver sobre o menu
-        function resetOverlayTimer(delay = 6000) {
+        function resetOverlayTimer(delay = 5500) {
             const overlay = document.getElementById('tvOverlay');
             if (!overlay) return;
             overlay.classList.remove('hidden');
@@ -1908,10 +2080,10 @@ function renderWebTVApp(host) {
             const btn = document.getElementById('btnPlayPause');
             if (v.paused) {
                 v.play();
-                btn.innerText = '⏸';
+                btn.innerHTML = ICONS.pause;
             } else {
                 v.pause();
-                btn.innerText = '▶';
+                btn.innerHTML = ICONS.play;
             }
             resetOverlayTimer();
         }
@@ -1970,7 +2142,7 @@ function renderWebTVApp(host) {
             }
 
             // Rastreamento para garantir que o menu NUNCA feche enquanto o mouse estiver sobre ele
-            const interactiveSelectors = '.tv-main-hud, .rail-nav, .category-col, .channels-col, .now-playing-panel, .bottom-player-bar, .tv-top-bar';
+            const interactiveSelectors = '.tv-main-hud, .rail-nav, .category-col, .channels-col, .now-playing-panel, .bottom-player-bar, .tv-top-bar, .channel-search-box';
             document.querySelectorAll(interactiveSelectors).forEach(el => {
                 const keepActive = () => {
                     isMouseOverMenu = true;
@@ -1989,6 +2161,20 @@ function renderWebTVApp(host) {
 
             // Teclado (Setas para TV / Controle Remoto)
             window.addEventListener('keydown', (e) => {
+                // Se estiver digitando na busca de canais, permitir digitação sem atalhos conflitantes
+                if (e.target.matches('input, textarea')) {
+                    if (e.key === 'Escape') {
+                        e.preventDefault();
+                        e.target.blur();
+                        closeChannelsLayer();
+                    } else if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const firstCard = document.querySelector('.channel-card');
+                        if (firstCard) firstCard.click();
+                    }
+                    return;
+                }
+
                 const overlay = document.getElementById('tvOverlay');
                 const isHidden = overlay.classList.contains('hidden');
 
