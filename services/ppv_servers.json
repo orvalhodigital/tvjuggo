@@ -1,0 +1,34 @@
+{
+  "description": "Servidores de Consulta e Fallback para Canais PPV e Esportes da Juggo TV",
+  "updatedAt": "2026-10-14T14:30:00Z",
+  "servers": [
+    {
+      "name": "Servidor Primário CDN",
+      "host": "topdnstop.lat:80",
+      "priority": 1,
+      "status": "active",
+      "types": ["Premiere", "SporTV", "ESPN", "TNT", "Space", "CazéTV"]
+    },
+    {
+      "name": "Servidor Reserva Alfa (Plano C)",
+      "host": "185.245.80.148:80",
+      "priority": 2,
+      "status": "active",
+      "types": ["Premiere", "SporTV", "Canais Abertos"]
+    },
+    {
+      "name": "Servidor Reserva Beta (Plano C)",
+      "host": "corruptx.org",
+      "priority": 3,
+      "status": "active",
+      "types": ["ESPN", "Canais Internacionais", "Variedades"]
+    },
+    {
+      "name": "Servidor Reserva Gamma (Plano C)",
+      "host": "dbonline.tech-cdn.top:80",
+      "priority": 4,
+      "status": "active",
+      "types": ["Combate", "PPV Alternativo", "Conmebol"]
+    }
+  ]
+}
