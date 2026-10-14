@@ -34,8 +34,23 @@ const QUALITIES_FILE = path.join(__dirname, 'channel_qualities.json');
 const channels = new Map();
 const activeStats = new Map();
 
-// Redundância Multi-Server (Plano C - Servidores Reservas)
-const BACKUP_SERVERS = ['185.245.80.148:80', 'corruptx.org', 'dbonline.tech-cdn.top:80'];
+// Redundância Multi-Server (Plano C - Carregamento Dinâmico de Servidores de Fallback)
+const PPV_SERVERS_FILE = path.join(__dirname, 'services', 'ppv_servers.json');
+function getBackupServers() {
+    try {
+        if (fs.existsSync(PPV_SERVERS_FILE)) {
+            const data = JSON.parse(fs.readFileSync(PPV_SERVERS_FILE, 'utf8'));
+            if (data && Array.isArray(data.servers)) {
+                const hosts = data.servers
+                    .filter(s => s.status === 'active' && s.host)
+                    .map(s => s.host.trim());
+                if (hosts.length > 0) return [...new Set(hosts)];
+            }
+        }
+    } catch (e) {}
+    return ['185.245.80.148:80', 'corruptx.org', 'dbonline.tech-cdn.top:80'];
+}
+const BACKUP_SERVERS = getBackupServers();
 
 function slugify(text) {
     return text
@@ -137,7 +152,7 @@ fs.watchFile(M3U_PATH, { interval: 1500 }, () => {
     loadChannels();
 });
 
-function fetchAndResolveM3u8(initialUrl) {
+function fetchAndResolveM3u8(initialUrl, timeoutMs = 3200) {
     return new Promise(resolve => {
         function get(currentUrl, depth) {
             if (depth > 6) return resolve(null);
@@ -151,10 +166,10 @@ function fetchAndResolveM3u8(initialUrl) {
                     headers: {
                         'User-Agent': 'VLC/3.0.18 LibVLC/3.0.18',
                         'Accept': '*/*'
-                    },
-                    timeout: 8000
+                    }
                 }, res => {
                     if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+                        req.destroy();
                         let next = res.headers.location;
                         if (next.startsWith('/')) {
                             next = `${parsed.protocol}//${parsed.host}${next}`;
@@ -162,11 +177,13 @@ function fetchAndResolveM3u8(initialUrl) {
                         return get(next, depth + 1);
                     }
                     if (res.statusCode !== 200) {
+                        req.destroy();
                         return resolve(null);
                     }
 
                     const contentType = res.headers['content-type'] || '';
                     if (contentType.includes('video/mp2t') || currentUrl.includes('.ts')) {
+                        req.destroy();
                         const hlsWrap = `#EXTM3U\n#EXT-X-VERSION:3\n#EXT-X-TARGETDURATION:12\n#EXT-X-MEDIA-SEQUENCE:1\n#EXTINF:10.000,\n${currentUrl}\n`;
                         return resolve({ body: hlsWrap, finalUrl: currentUrl });
                     }
@@ -202,8 +219,9 @@ function fetchAndResolveM3u8(initialUrl) {
                         }
                     });
                 });
-                req.on('error', () => resolve(null));
+                req.on('error', () => { req.destroy(); resolve(null); });
                 req.on('timeout', () => { req.destroy(); resolve(null); });
+                req.setTimeout(timeoutMs);
             } catch (e) {
                 resolve(null);
             }
@@ -212,7 +230,7 @@ function fetchAndResolveM3u8(initialUrl) {
     });
 }
 
-// Handler de HLS para TV Ao Vivo com Redirecionamento 302 + Redundância Multi-Server (Plano C)
+// Handler de HLS para TV Ao Vivo com Redirecionamento 302 + Redundância Multi-Server Dinâmica (Plano C)
 async function handleHlsRequest(channel, req, res, queryQuality) {
     let candidateUrls = [];
 
@@ -235,10 +253,10 @@ async function handleHlsRequest(channel, req, res, queryQuality) {
         }
     });
 
-    // 1. Tentar resoluções do servidor primário
+    // 1. Tentar resoluções do servidor primário (timeout ágil de 3200ms)
     for (let i = 0; i < candidateUrls.length; i++) {
         const targetUrl = candidateUrls[i];
-        const hlsResult = await fetchAndResolveM3u8(targetUrl);
+        const hlsResult = await fetchAndResolveM3u8(targetUrl, 3200);
         if (hlsResult && hlsResult.body) {
             activeStats.set(channel.id, {
                 id: channel.id,
@@ -269,51 +287,53 @@ async function handleHlsRequest(channel, req, res, queryQuality) {
         }
     }
 
-    // 2. PLANO C: REDUNDÂNCIA MULTI-SERVER (FAILOVER)
-    console.log(`[Plano C] Servidor primário falhou para "${channel.name}". Ativando servidores reservas...`);
-    for (const backupHost of BACKUP_SERVERS) {
-        for (const targetUrl of candidateUrls) {
-            try {
-                const u = new URL(targetUrl);
-                if (u.host === backupHost) continue;
-                u.host = backupHost;
-                const backupUrl = u.toString();
-                const backupResult = await fetchAndResolveM3u8(backupUrl);
-                if (backupResult && backupResult.body) {
-                    console.log(`[Plano C] Canal "${channel.name}" recuperado no servidor reserva: ${backupHost}!`);
-                    activeStats.set(channel.id, {
-                        id: channel.id,
-                        name: channel.name,
-                        group: channel.group,
-                        quality: (queryQuality || 'HD') + ' (Reserva)',
-                        lastSeen: Date.now()
-                    });
+    // 2. PLANO C: REDUNDÂNCIA MULTI-SERVER DINÂMICA (FAILOVER RÁPIDO)
+    const backupList = getBackupServers();
+    console.log(`[Plano C] Servidor primário falhou para "${channel.name}". Ativando ${backupList.length} servidores reservas...`);
 
-                    if (STREAM_MODE === 'REDIRECT' && backupResult.finalUrl) {
-                        res.writeHead(302, {
-                            'Location': backupResult.finalUrl,
-                            'Access-Control-Allow-Origin': '*'
-                        });
-                        res.end();
-                        return;
-                    }
+    const primaryUrl = candidateUrls[0] || '';
+    for (const backupHost of backupList) {
+        try {
+            if (!primaryUrl) break;
+            const u = new URL(primaryUrl);
+            if (u.host === backupHost) continue;
+            u.host = backupHost;
+            const backupUrl = u.toString();
+            const backupResult = await fetchAndResolveM3u8(backupUrl, 2500);
+            if (backupResult && backupResult.body) {
+                console.log(`[Plano C] Canal "${channel.name}" recuperado com sucesso no servidor reserva: ${backupHost}!`);
+                activeStats.set(channel.id, {
+                    id: channel.id,
+                    name: channel.name,
+                    group: channel.group,
+                    quality: (queryQuality || 'HD') + ' (Reserva)',
+                    lastSeen: Date.now()
+                });
 
-                    res.writeHead(200, {
-                        'Content-Type': 'application/vnd.apple.mpegurl; charset=utf-8',
-                        'Access-Control-Allow-Origin': '*',
-                        'Access-Control-Allow-Headers': '*',
-                        'Access-Control-Allow-Methods': 'GET, OPTIONS',
-                        'Cache-Control': 'no-cache, no-store, must-revalidate'
+                if (STREAM_MODE === 'REDIRECT' && backupResult.finalUrl) {
+                    res.writeHead(302, {
+                        'Location': backupResult.finalUrl,
+                        'Access-Control-Allow-Origin': '*'
                     });
-                    res.end(backupResult.body);
+                    res.end();
                     return;
                 }
-            } catch (err) {}
-        }
+
+                res.writeHead(200, {
+                    'Content-Type': 'application/vnd.apple.mpegurl; charset=utf-8',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Headers': '*',
+                    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+                    'Cache-Control': 'no-cache, no-store, must-revalidate'
+                });
+                res.end(backupResult.body);
+                return;
+            }
+        } catch (err) {}
     }
 
     res.writeHead(502, { 'Content-Type': 'text/plain; charset=utf-8' });
-    res.end('Canal temporariamente fora do ar em todos os servidores.');
+    res.end('Canal temporariamente fora do ar em todos os servidores primários e reservas.');
 }
 
 // Servidor HTTP Principal
@@ -931,6 +951,9 @@ function renderWebTVApp(host) {
         <div style="font-weight: 700; font-size: 16px; color: #fff;" id="loaderText">Sintonizando canal...</div>
     </div>
 
+    <!-- Anti-Freeze Status Badge -->
+    <div id="stallBadge" style="position: absolute; top: 25px; right: 200px; background: rgba(15, 23, 42, 0.88); backdrop-filter: blur(12px); border: 1px solid rgba(56, 189, 248, 0.5); color: #38bdf8; padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 700; display: none; z-index: 40; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">⚡ Estabilizando sinal...</div>
+
     <!-- TV HUD Overlay -->
     <div id="tvOverlay">
         <!-- Top Bar -->
@@ -1016,6 +1039,7 @@ function renderWebTVApp(host) {
             </div>
 
             <div class="bot-right">
+                <button class="action-icon" style="color: #38bdf8;" onclick="unfreezeStream()" title="⚡ Destravar Sinal / Alternar Fallback">⚡</button>
                 <button class="action-icon" onclick="reloadCurrentStream()" title="Recarregar Canal">↻</button>
                 <button class="action-icon" onclick="toggleFavoriteCurrent()" id="btnFavCurrent" title="Favoritar">⭐</button>
                 <button class="action-icon" onclick="toggleFullscreen()" title="Tela Cheia">⛶</button>
@@ -1193,8 +1217,96 @@ function renderWebTVApp(host) {
             if (ch) playChannel(ch);
         }
 
-        // Tocar Canal com Buffer Anti-Travamento (60 Segundos)
-        function playChannel(ch) {
+        // ==========================================
+        // WATCHDOG ATIVO ANTI-CONGELAMENTO (HEARTBEAT)
+        // ==========================================
+        let stallInterval = null;
+        let lastCurTime = 0;
+        let frozenTicks = 0;
+        let failoverCount = 0;
+
+        function startAntiFreezeWatchdog() {
+            if (stallInterval) clearInterval(stallInterval);
+            lastCurTime = 0;
+            frozenTicks = 0;
+
+            stallInterval = setInterval(() => {
+                const video = document.getElementById('webVideo');
+                if (!video || video.paused || video.ended || video.readyState < 2) {
+                    frozenTicks = 0;
+                    return;
+                }
+
+                const cur = video.currentTime;
+                // Se o tempo de reprodução não avançou pelo menos 0.05 segundos
+                if (Math.abs(cur - lastCurTime) < 0.05) {
+                    frozenTicks++;
+                    console.warn('[Watchdog Anti-Congelamento] Vídeo congelado na tela. Segundos:', frozenTicks);
+
+                    if (frozenTicks === 3) {
+                        // Nível 1: micro-seek (+0.2s) para destravar o buffer de hardware
+                        showStallToast('Destravando sinal...');
+                        video.currentTime += 0.2;
+                        video.play().catch(() => {});
+                    } else if (frozenTicks === 5) {
+                        // Nível 2: recuperar erros de mídia e saltar para borda ao vivo
+                        showStallToast('Sincronizando transmissão...');
+                        if (hlsPlayer) {
+                            hlsPlayer.recoverMediaError();
+                            if (video.buffered && video.buffered.length > 0) {
+                                video.currentTime = video.buffered.end(video.buffered.length - 1) - 1;
+                            }
+                        }
+                        video.play().catch(() => {});
+                    } else if (frozenTicks >= 8) {
+                        // Nível 3: sinal morto no servidor primário; acionar failover/reconexão
+                        showStallToast('Alternando para servidor de fallback...');
+                        frozenTicks = 0;
+                        failoverCount++;
+                        if (activeChannel) {
+                            playChannel(activeChannel, true);
+                        }
+                    }
+                } else {
+                    frozenTicks = 0;
+                    lastCurTime = cur;
+                }
+            }, 1000);
+        }
+
+        function showStallToast(msg) {
+            const badge = document.getElementById('stallBadge');
+            if (badge) {
+                badge.innerText = '⚡ ' + msg;
+                badge.style.display = 'block';
+                setTimeout(() => { badge.style.display = 'none'; }, 3000);
+            }
+        }
+
+        function hideStallToast() {
+            const badge = document.getElementById('stallBadge');
+            if (badge) badge.style.display = 'none';
+        }
+
+        function unfreezeStream() {
+            showStallToast('Destravando sinal...');
+            const video = document.getElementById('webVideo');
+            if (video) {
+                video.currentTime += 0.3;
+                video.play().catch(() => {});
+            }
+            if (hlsPlayer) {
+                hlsPlayer.recoverMediaError();
+            }
+            setTimeout(() => {
+                if (video && (video.paused || video.readyState < 2)) {
+                    if (activeChannel) playChannel(activeChannel, true);
+                }
+            }, 1200);
+        }
+
+        // Tocar Canal com Buffer Anti-Travamento (90 Segundos + Deep Reservoir)
+        function playChannel(ch, isFailover = false) {
             activeChannel = ch;
             localStorage.setItem('juggo_last_channel_id', ch.id);
 
@@ -1207,7 +1319,7 @@ function renderWebTVApp(host) {
             document.getElementById('epgDesc').innerText = 'Transmitindo agora em ' + ch.highestResolution + '. Qualidade balanceada com estabilidade máxima.';
 
             renderChannels(activeCategory);
-            showLoader(true, 'Sintonizando ' + ch.name + '...');
+            showLoader(true, isFailover ? 'Conectando servidor reserva...' : 'Sintonizando ' + ch.name + '...');
 
             const video = document.getElementById('webVideo');
             if (hlsPlayer) {
@@ -1218,26 +1330,31 @@ function renderWebTVApp(host) {
             video.removeAttribute('src');
             video.load();
 
-            const streamUrl = ch.streamUrl;
+            const cacheBuster = isFailover ? ('?retry=' + Date.now()) : '';
+            const streamUrl = ch.streamUrl + cacheBuster;
 
             // Configuração Ultra-Robusta do Hls.js para Evitar Travamentos
             if (Hls && Hls.isSupported()) {
                 hlsPlayer = new Hls({
                     enableWorker: true,
                     lowLatencyMode: false, // Modo padrão estável (evita engasgos de internet)
-                    backBufferLength: 90,
-                    maxBufferLength: 60, // 60 segundos de buffer tolerante
-                    maxMaxBufferLength: 120,
-                    maxBufferSize: 80 * 1024 * 1024,
-                    manifestLoadingTimeOut: 20000,
-                    manifestLoadingMaxRetry: 6,
-                    manifestLoadingRetryDelay: 1000,
-                    fragLoadingTimeOut: 30000,
-                    fragLoadingMaxRetry: 6,
-                    fragLoadingRetryDelay: 1000,
-                    liveSyncDurationCount: 5, // 5 segmentos atrás para fluxo estável
-                    liveMaxLatencyDurationCount: 10,
-                    highBufferWatchdogPeriod: 3
+                    backBufferLength: 60,
+                    maxBufferLength: 90, // 90 segundos de buffer tolerante anti-oscilação
+                    maxMaxBufferLength: 180,
+                    maxBufferSize: 90 * 1024 * 1024,
+                    manifestLoadingTimeOut: 12000,
+                    manifestLoadingMaxRetry: 5,
+                    manifestLoadingRetryDelay: 500,
+                    fragLoadingTimeOut: 18000,
+                    fragLoadingMaxRetry: 5,
+                    fragLoadingRetryDelay: 500,
+                    liveSyncDurationCount: 7, // 7 segmentos (~35-45s) para absorver qualquer oscilação de rede sem travar
+                    liveMaxLatencyDurationCount: 15,
+                    maxBufferHole: 0.5, // Pula automaticamente buracos de timestamp no fluxo
+                    highBufferWatchdogPeriod: 2,
+                    nudgeOffset: 0.2, // Destrava saltos de frame no hardware decoder
+                    nudgeMaxRetry: 5,
+                    maxFragLookUpTolerance: 0.25
                 });
 
                 hlsPlayer.loadSource(streamUrl);
@@ -1252,24 +1369,38 @@ function renderWebTVApp(host) {
                     if (data.fatal) {
                         switch (data.type) {
                             case Hls.ErrorTypes.NETWORK_ERROR:
+                                showStallToast('Reconectando rede...');
                                 hlsPlayer.startLoad();
                                 break;
                             case Hls.ErrorTypes.MEDIA_ERROR:
+                                showStallToast('Recuperando decodificador...');
                                 hlsPlayer.recoverMediaError();
                                 break;
                             default:
                                 hlsPlayer.destroy();
-                                setTimeout(() => { if (activeChannel) playChannel(activeChannel); }, 2000);
+                                setTimeout(() => { if (activeChannel) playChannel(activeChannel, true); }, 1500);
                                 break;
                         }
                     }
                 });
+
+                video.onwaiting = function() {
+                    showStallToast('Bufferizando sinal...');
+                };
+                video.onplaying = function() {
+                    hideStallToast();
+                };
+                video.onstalled = function() {
+                    console.warn('[Video] Stalled detectado. Solicitando novos fragmentos...');
+                    if (hlsPlayer) hlsPlayer.startLoad();
+                };
             } else {
                 video.src = streamUrl;
                 video.play().catch(e => console.log('Autoplay:', e));
                 showLoader(false);
             }
 
+            startAntiFreezeWatchdog();
             resetOverlayTimer();
         }
 

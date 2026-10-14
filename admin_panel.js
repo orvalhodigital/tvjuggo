@@ -12,6 +12,7 @@ const os = require('os');
 const path = require('path');
 const channelHealth = require('./services/channel_health');
 const aiScheduler = require('./services/ai_scheduler');
+const githubMiner = require('./services/github_miner');
 
 let lastGamesUpdateTimestamp = null;
 let lastUpdateOutput = 'Nenhuma execução recente.';
@@ -121,6 +122,7 @@ function handleAdminRoutes(req, res, context) {
         const usedMem = totalMem - freeMem;
         const health = channelHealth.getHealthReport();
         const aiInfo = aiScheduler.getAiStatus();
+        const minerInfo = githubMiner.getMinerStatus();
 
         res.writeHead(200, {
             'Content-Type': 'application/json; charset=utf-8',
@@ -143,7 +145,8 @@ function handleAdminRoutes(req, res, context) {
             lastUpdateOutput: lastUpdateOutput,
             backupServers: BACKUP_SERVERS,
             health: health,
-            ai: aiInfo
+            ai: aiInfo,
+            miner: minerInfo
         }));
         return true;
     }
@@ -233,6 +236,23 @@ function handleAdminRoutes(req, res, context) {
         return true;
     }
 
+    // 9. API para Executar Minerador de Servidores no GitHub & Web
+    if (pathname === '/api/admin/run-miner' && req.method === 'POST') {
+        if (!isAuthenticated(req)) {
+            res.writeHead(401, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Não autorizado' }));
+            return true;
+        }
+
+        githubMiner.runMinerJob().then(() => {
+            console.log('[Admin] Varredura do minerador no GitHub finalizada.');
+        });
+
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ success: true, message: 'Rastreamento no GitHub e fontes abertas iniciado!' }));
+        return true;
+    }
+
     return false;
 }
 
@@ -253,8 +273,11 @@ function initAutonomousSchedulers(context) {
     // Iniciar saúde dos canais a cada 4 horas
     channelHealth.initHealthCheckScheduler(context.channels);
 
-    // Iniciar IA Gemini com ciclo de 48h
+    // Iniciar IA Gemini com ciclo de descanso de 48h
     aiScheduler.initAiScheduler();
+
+    // Iniciar Minerador Autônomo de Servidores no GitHub a cada 5 dias
+    githubMiner.initMinerScheduler();
 }
 
 function execGamesUpdate(context) {
@@ -622,10 +645,9 @@ function renderAdminDashboard(context) {
         /* Action Grid */
         .actions-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
             gap: 24px;
         }
-        @media (max-width: 860px) { .actions-grid { grid-template-columns: 1fr; } }
 
         .action-card {
             background: var(--surface);
@@ -818,6 +840,18 @@ function renderAdminDashboard(context) {
                 </button>
                 <div class="log-box" id="aiLogBox">Pronto para execução.</div>
             </div>
+
+            <!-- 3. Minerador Autônomo de Servidores (GitHub & Web) -->
+            <div class="action-card" style="border-color: rgba(14, 165, 233, 0.4);">
+                <div class="action-title">🌐 Minerador de Servidores (GitHub & Web)</div>
+                <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5;" id="minerStatusDesc">
+                    Ciclo de 5 Dias: Varre repositórios do GitHub buscando novos servidores e adiciona ao Fallback.
+                </p>
+                <button class="btn-action" style="background: linear-gradient(135deg, #0ea5e9, #0284c7);" id="btnRunMiner" onclick="triggerMiner()">
+                    <span>🔍 Rastrear Novos Servidores Agora</span>
+                </button>
+                <div class="log-box" id="minerLogBox" style="color: #6ee7b7;">Pronto para rastreamento.</div>
+            </div>
         </div>
     </main>
 
@@ -877,6 +911,13 @@ function renderAdminDashboard(context) {
                         document.getElementById('aiStatusDesc').innerText = 'Status: ' + (data.ai.state === 'idle' ? 'Em Repouso Programado 💤' : 'Analisando Eventos 🧠') + ' • Última: ' + (data.ai.lastRun || 'Recentemente') + ' • Próxima em 48h.';
                         document.getElementById('aiLogBox').innerText = data.ai.lastLog || 'Sem logs.';
                     }
+
+                    // Minerador de Servidores no GitHub
+                    if (data.miner) {
+                        const srvCount = data.miner.discoveredServers ? data.miner.discoveredServers.length : 0;
+                        document.getElementById('minerStatusDesc').innerText = 'Status: ' + (data.miner.state === 'idle' ? 'Ocioso (Monitorando) ✅' : 'Varrendo GitHub & Web 🔍') + ' • ' + srvCount + ' servidores ativos salvos • Próxima: ' + (data.miner.nextRun || 'Em 5 dias');
+                        document.getElementById('minerLogBox').innerText = data.miner.lastLog || 'Sem logs do minerador.';
+                    }
                 })
                 .catch(e => console.log('Erro ao atualizar status:', e));
         }
@@ -914,6 +955,18 @@ function renderAdminDashboard(context) {
                 .then(res => {
                     showToast(res.message);
                     setTimeout(() => { btn.disabled = false; btn.innerText = '🚀 Executar Curadoria de IA (10 Dias)'; refreshStatus(); }, 4000);
+                });
+        }
+
+        function triggerMiner() {
+            const btn = document.getElementById('btnRunMiner');
+            btn.disabled = true;
+            btn.innerText = '🔍 Minerando servidores no GitHub...';
+            fetch('/api/admin/run-miner', { method: 'POST' })
+                .then(r => r.json())
+                .then(res => {
+                    showToast(res.message);
+                    setTimeout(() => { btn.disabled = false; btn.innerText = '🔍 Rastrear Novos Servidores Agora'; refreshStatus(); }, 5000);
                 });
         }
 

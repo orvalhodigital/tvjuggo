@@ -1,34 +1,273 @@
 {
   "description": "Servidores de Consulta e Fallback para Canais PPV e Esportes da Juggo TV",
-  "updatedAt": "2026-10-14T14:30:00Z",
+  "updatedAt": "2026-10-14T18:08:01.777Z",
   "servers": [
     {
       "name": "Servidor Primário CDN",
       "host": "topdnstop.lat:80",
       "priority": 1,
       "status": "active",
-      "types": ["Premiere", "SporTV", "ESPN", "TNT", "Space", "CazéTV"]
+      "types": [
+        "Premiere",
+        "SporTV",
+        "ESPN",
+        "TNT",
+        "Space",
+        "CazéTV"
+      ]
     },
     {
       "name": "Servidor Reserva Alfa (Plano C)",
       "host": "185.245.80.148:80",
       "priority": 2,
       "status": "active",
-      "types": ["Premiere", "SporTV", "Canais Abertos"]
+      "types": [
+        "Premiere",
+        "SporTV",
+        "Canais Abertos"
+      ]
     },
     {
       "name": "Servidor Reserva Beta (Plano C)",
       "host": "corruptx.org",
       "priority": 3,
       "status": "active",
-      "types": ["ESPN", "Canais Internacionais", "Variedades"]
+      "types": [
+        "ESPN",
+        "Canais Internacionais",
+        "Variedades"
+      ]
     },
     {
       "name": "Servidor Reserva Gamma (Plano C)",
       "host": "dbonline.tech-cdn.top:80",
       "priority": 4,
       "status": "active",
-      "types": ["Combate", "PPV Alternativo", "Conmebol"]
+      "types": [
+        "Combate",
+        "PPV Alternativo",
+        "Conmebol"
+      ]
+    },
+    {
+      "name": "Servidor Reserva GitHub #5",
+      "host": "45.162.64.114",
+      "priority": 5,
+      "status": "active",
+      "types": [
+        "Fallback Global",
+        "Multi-Server"
+      ],
+      "discoveredAt": "14/10/2026"
+    },
+    {
+      "name": "Servidor Reserva GitHub #6",
+      "host": "168.197.104.22",
+      "priority": 6,
+      "status": "active",
+      "types": [
+        "Fallback Global",
+        "Multi-Server"
+      ],
+      "discoveredAt": "14/10/2026"
+    },
+    {
+      "name": "Servidor Reserva GitHub #7",
+      "host": "170.83.49.66:8083",
+      "priority": 7,
+      "status": "active",
+      "types": [
+        "Fallback Global",
+        "Multi-Server"
+      ],
+      "discoveredAt": "14/10/2026"
+    },
+    {
+      "name": "Servidor Reserva GitHub #8",
+      "host": "186.219.52.187",
+      "priority": 8,
+      "status": "active",
+      "types": [
+        "Fallback Global",
+        "Multi-Server"
+      ],
+      "discoveredAt": "14/10/2026"
+    },
+    {
+      "name": "Servidor Reserva GitHub #9",
+      "host": "aovivo.equipea.com.br:5443",
+      "priority": 9,
+      "status": "active",
+      "types": [
+        "Fallback Global",
+        "Multi-Server"
+      ],
+      "discoveredAt": "14/10/2026"
+    },
+    {
+      "name": "Servidor Reserva GitHub #10",
+      "host": "45.177.114.115",
+      "priority": 10,
+      "status": "active",
+      "types": [
+        "Fallback Global",
+        "Multi-Server"
+      ],
+      "discoveredAt": "14/10/2026"
+    },
+    {
+      "name": "Servidor Reserva GitHub #11",
+      "host": "170.83.16.50",
+      "priority": 11,
+      "status": "active",
+      "types": [
+        "Fallback Global",
+        "Multi-Server"
+      ],
+      "discoveredAt": "14/10/2026"
+    },
+    {
+      "name": "Servidor Reserva GitHub #12",
+      "host": "amazonsat.brasilstream.com.br",
+      "priority": 12,
+      "status": "active",
+      "types": [
+        "Fallback Global",
+        "Multi-Server"
+      ],
+      "discoveredAt": "14/10/2026"
+    },
+    {
+      "name": "Servidor Reserva GitHub #13",
+      "host": "video05.logicahost.com.br",
+      "priority": 13,
+      "status": "active",
+      "types": [
+        "Fallback Global",
+        "Multi-Server"
+      ],
+      "discoveredAt": "14/10/2026"
+    },
+    {
+      "name": "Servidor Reserva GitHub #14",
+      "host": "awtv.nuvemplay.live",
+      "priority": 14,
+      "status": "active",
+      "types": [
+        "Fallback Global",
+        "Multi-Server"
+      ],
+      "discoveredAt": "14/10/2026"
+    },
+    {
+      "name": "Servidor Reserva GitHub #15",
+      "host": "170.84.165.204",
+      "priority": 15,
+      "status": "active",
+      "types": [
+        "Fallback Global",
+        "Multi-Server"
+      ],
+      "discoveredAt": "14/10/2026"
+    },
+    {
+      "name": "Servidor Reserva GitHub #16",
+      "host": "media.cdntvms.com.br",
+      "priority": 16,
+      "status": "active",
+      "types": [
+        "Fallback Global",
+        "Multi-Server"
+      ],
+      "discoveredAt": "14/10/2026"
+    },
+    {
+      "name": "Servidor Reserva GitHub #17",
+      "host": "cdn-5.nxplay.com.br",
+      "priority": 17,
+      "status": "active",
+      "types": [
+        "Fallback Global",
+        "Multi-Server"
+      ],
+      "discoveredAt": "14/10/2026"
+    },
+    {
+      "name": "Servidor Reserva GitHub #18",
+      "host": "stmv1.transmissaodigital.com",
+      "priority": 18,
+      "status": "active",
+      "types": [
+        "Fallback Global",
+        "Multi-Server"
+      ],
+      "discoveredAt": "14/10/2026"
+    },
+    {
+      "name": "Servidor Reserva GitHub #19",
+      "host": "stream01.msolutionbrasil.com.br",
+      "priority": 19,
+      "status": "active",
+      "types": [
+        "Fallback Global",
+        "Multi-Server"
+      ],
+      "discoveredAt": "14/10/2026"
+    },
+    {
+      "name": "Servidor Reserva GitHub #20",
+      "host": "v-us-01.wisestream.io",
+      "priority": 20,
+      "status": "active",
+      "types": [
+        "Fallback Global",
+        "Multi-Server"
+      ],
+      "discoveredAt": "14/10/2026"
+    },
+    {
+      "name": "Servidor Reserva GitHub #21",
+      "host": "stmv5.samcast.com.br",
+      "priority": 21,
+      "status": "active",
+      "types": [
+        "Fallback Global",
+        "Multi-Server"
+      ],
+      "discoveredAt": "14/10/2026"
+    },
+    {
+      "name": "Servidor Reserva GitHub #22",
+      "host": "eitv7.cdn.broadpeak.io",
+      "priority": 22,
+      "status": "active",
+      "types": [
+        "Fallback Global",
+        "Multi-Server"
+      ],
+      "discoveredAt": "14/10/2026"
+    },
+    {
+      "name": "Servidor Reserva GitHub #23",
+      "host": "play.canalsete.com.br:1935",
+      "priority": 23,
+      "status": "active",
+      "types": [
+        "Fallback Global",
+        "Multi-Server"
+      ],
+      "discoveredAt": "14/10/2026"
+    },
+    {
+      "name": "Servidor Reserva GitHub #24",
+      "host": "video24.mais.uol.com.br",
+      "priority": 24,
+      "status": "active",
+      "types": [
+        "Fallback Global",
+        "Multi-Server"
+      ],
+      "discoveredAt": "14/10/2026"
     }
   ]
 }
