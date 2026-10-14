@@ -21,6 +21,7 @@ const { handleAdminRoutes, initAutonomousSchedulers } = require('./admin_panel')
 const footballHub = require('./services/football_hub');
 const channelHealth = require('./services/channel_health');
 const aiScheduler = require('./services/ai_scheduler');
+const cs2Hub = require('./services/cs2_hub');
 
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
@@ -487,7 +488,22 @@ const server = http.createServer((req, res) => {
         return;
     }
 
-    // 6. Stream HLS de TV Ao Vivo
+    // 6. API do CS2 & HLTV Hub (Rankings, Partidas e Multi-Streams)
+    if (pathname === '/api/cs2/data') {
+        cs2Hub.getCs2Data().then(data => {
+            res.writeHead(200, {
+                'Content-Type': 'application/json; charset=utf-8',
+                'Access-Control-Allow-Origin': '*'
+            });
+            res.end(JSON.stringify(data));
+        }).catch(err => {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: err.message }));
+        });
+        return;
+    }
+
+    // 7. Stream HLS de TV Ao Vivo
     if (pathname.startsWith('/stream/')) {
         let channelId = pathname.replace('/stream/', '').replace(/\.(m3u8|ts)$/i, '');
         let channel = channels.get(channelId);
@@ -916,6 +932,127 @@ function renderWebTVApp(host) {
         }
         .btn-tune:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4); }
 
+        /* CS2 & Esports Hub */
+        #cs2Modal {
+            position: absolute;
+            inset: 30px 40px;
+            background: rgba(13, 17, 28, 0.96);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 24px;
+            z-index: 50;
+            display: none;
+            flex-direction: column;
+            padding: 28px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.85);
+        }
+        .cs-match-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+            gap: 16px;
+        }
+        .cs-match-card:hover {
+            background: rgba(37, 99, 235, 0.14);
+            border-color: rgba(37, 99, 235, 0.5);
+            transform: translateY(-2px);
+        }
+        .cs-match-card.is-br {
+            border-left: 4px solid #10b981;
+            background: linear-gradient(90deg, rgba(16, 185, 129, 0.09), rgba(255, 255, 255, 0.03));
+        }
+        .cs-match-info {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .cs-tourney {
+            font-size: 12px;
+            font-weight: 800;
+            color: #38bdf8;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .cs-match-teams {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .cs-team {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+            font-weight: 800;
+            min-width: 150px;
+        }
+        .cs-team-logo {
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+        }
+        .cs-vs {
+            font-size: 11px;
+            font-weight: 900;
+            color: var(--text-muted);
+            background: rgba(255,255,255,0.06);
+            padding: 3px 8px;
+            border-radius: 12px;
+        }
+        .cs-streams-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+        .cs-stream-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border-glass);
+            color: #fff;
+            padding: 8px 14px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .cs-stream-btn:hover {
+            background: var(--primary);
+            transform: scale(1.04);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+        }
+        .cs-stream-btn.official {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            border-color: #3b82f6;
+        }
+        .cs-stream-btn.featured {
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-color: #34d399;
+        }
+        .cs-stream-btn.kick {
+            background: linear-gradient(135deg, #059669, #047857);
+            border-color: #53fc18;
+        }
+        .hltv-badge {
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            color: #fbbf24;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
         /* Loading Spinner */
         #loader {
             position: absolute;
@@ -943,6 +1080,14 @@ function renderWebTVApp(host) {
     <!-- Video Player Background -->
     <div id="videoContainer">
         <video id="webVideo" playsinline></video>
+        <iframe id="embedFrame" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen style="display:none; width:100%; height:100%; border:none; position:absolute; inset:0; z-index:2; background:#000;"></iframe>
+    </div>
+
+    <!-- Barra de Controle de Transmissões Ao Vivo de Esports -->
+    <div id="activeStreamBar" style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); z-index: 45; display: none; align-items: center; gap: 10px; background: rgba(13, 17, 28, 0.94); border: 1px solid rgba(255, 255, 255, 0.2); backdrop-filter: blur(16px); padding: 8px 18px; border-radius: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
+        <span id="activeStreamTitle" style="font-weight: 800; font-size: 13px; color: #fff; margin-right: 8px;">🎯 CS2 Ao Vivo</span>
+        <div id="activeStreamOptions" style="display: flex; gap: 6px;"></div>
+        <button onclick="returnToLiveTv()" style="background: rgba(239, 68, 68, 0.25); border: 1px solid rgba(239, 68, 68, 0.7); color: #fca5a5; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s;">✕ Voltar para TV</button>
     </div>
 
     <!-- Spinner Loader -->
@@ -978,7 +1123,8 @@ function renderWebTVApp(host) {
             <!-- Leftmost Rail -->
             <div class="rail-nav">
                 <button class="rail-btn active" id="railTvBtn" onclick="openTvView()" title="Canais Ao Vivo">📺</button>
-                <button class="rail-btn" id="railFutBtn" onclick="toggleFutebolHub()" title="Futebol & Classificações">⚽</button>
+                <button class="rail-btn" id="railFutBtn" onclick="toggleFutebolHub()" title="Central Poliesportiva (Futebol, Basquete, Vôlei, NFL)">🏆</button>
+                <button class="rail-btn" id="railCsBtn" onclick="toggleCs2Hub()" title="CS2 & Esports Hub (HLTV & Multi-Streams)">🎯</button>
                 <button class="rail-btn" onclick="toggleFavorites()" title="Favoritos">⭐</button>
                 <button class="rail-btn" onclick="focusSearch()" title="Buscar">🔍</button>
             </div>
@@ -1047,14 +1193,14 @@ function renderWebTVApp(host) {
         </div>
     </div>
 
-    <!-- MODAL FUTEBOL HUB (Classificações e Jogos da Rodada) -->
+    <!-- MODAL FUTEBOL & CENTRAL POLIESPORTIVA (Classificações e Jogos) -->
     <div id="futebolModal">
         <div class="fut-header">
             <div style="display: flex; align-items: center; gap: 14px;">
-                <span style="font-size: 26px;">⚽</span>
+                <span style="font-size: 26px;">🏆</span>
                 <div>
-                    <h2 style="font-size: 22px; font-weight: 900;">Futebol Hub - Classificações & Jogos</h2>
-                    <p style="font-size: 13px; color: var(--text-muted);">Clique em qualquer partida para sintonizar a transmissão instantaneamente.</p>
+                    <h2 style="font-size: 22px; font-weight: 900;">Central Poliesportiva - Futebol, Basquete NBA, Vôlei & NFL</h2>
+                    <p style="font-size: 13px; color: var(--text-muted);">Tabelas ao vivo e jogos da rodada. Clique em Assistir para sintonizar a transmissão.</p>
                 </div>
             </div>
             <button onclick="toggleFutebolHub()" style="background: rgba(255,255,255,0.1); border: none; color: #fff; width: 36px; height: 36px; border-radius: 50%; font-size: 18px; cursor: pointer;">✕</button>
@@ -1072,11 +1218,11 @@ function renderWebTVApp(host) {
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th>Clube</th>
-                            <th>PTS</th>
+                            <th>Equipe</th>
+                            <th>PTS / V</th>
                             <th>J</th>
                             <th>V</th>
-                            <th>SG</th>
+                            <th>Diff</th>
                         </tr>
                     </thead>
                     <tbody id="standingsBody">
@@ -1087,9 +1233,55 @@ function renderWebTVApp(host) {
 
             <!-- Jogos da Rodada -->
             <div class="fut-matches">
-                <h3 style="font-size: 15px; font-weight: 800; margin-bottom: 12px; color: #fff;">⚽ Jogos da Rodada</h3>
+                <h3 style="font-size: 15px; font-weight: 800; margin-bottom: 12px; color: #fff;">🏆 Jogos da Rodada</h3>
                 <div id="matchesContainer">Carregando partidas...</div>
             </div>
+        </div>
+    </div>
+
+    <!-- MODAL CS2 & ESPORTS HUB (HLTV & Partidas Tier 1 / Brasil) -->
+    <div id="cs2Modal">
+        <div class="fut-header">
+            <div style="display: flex; align-items: center; gap: 14px;">
+                <span style="font-size: 28px;">🎯</span>
+                <div>
+                    <h2 style="font-size: 22px; font-weight: 900;">CS2 Hub - HLTV Rankings & Jogos Ao Vivo</h2>
+                    <p style="font-size: 13px; color: var(--text-muted);">Transmissões diretas dos principais campeonatos mundiais (Tier S / Tier 1) e brasileiros (CBCS, ESL, Major, BLAST) via Twitch, YouTube e Kick.</p>
+                </div>
+            </div>
+            <button onclick="toggleCs2Hub()" style="background: rgba(255,255,255,0.1); border: none; color: #fff; width: 36px; height: 36px; border-radius: 50%; font-size: 18px; cursor: pointer;">✕</button>
+        </div>
+
+        <div class="fut-tabs" id="cs2Tabs">
+            <button class="fut-tab active" id="tabCsMatches" onclick="switchCsTab('matches')">🔥 Partidas Ao Vivo & Próximas</button>
+            <button class="fut-tab" id="tabCsRankings" onclick="switchCsTab('rankings')">🏆 HLTV World Ranking (Top 10 Mundial & Brasil)</button>
+        </div>
+
+        <!-- Conteúdo 1: Partidas e Multi-streams -->
+        <div id="csMatchesView" style="display: flex; flex-direction: column; gap: 12px; flex: 1; overflow-y: auto; padding: 10px 4px 10px 0;">
+            <div id="csMatchesContainer">Carregando partidas de CS2...</div>
+        </div>
+
+        <!-- Conteúdo 2: Ranking Mundial HLTV -->
+        <div id="csRankingsView" style="display: none; flex: 1; overflow-y: auto; background: rgba(10, 15, 26, 0.7); border-radius: 16px; padding: 16px; margin-top: 10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                <h3 style="font-size: 15px; font-weight: 800; color: #fff;">📊 Classificação Mundial HLTV (Atualizada)</h3>
+                <span style="font-size: 12px; color: var(--accent); font-weight: 700;">🇧🇷 Destaques Brasileiros em Evidência</span>
+            </div>
+            <table class="standings-table">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">Pos</th>
+                        <th>Equipe</th>
+                        <th>Região / País</th>
+                        <th>Pontos HLTV</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="csRankingsBody">
+                    <tr><td colspan="5" style="text-align:center; padding:30px; color:var(--text-muted);">Carregando ranking oficial HLTV...</td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -1321,7 +1513,19 @@ function renderWebTVApp(host) {
             renderChannels(activeCategory);
             showLoader(true, isFailover ? 'Conectando servidor reserva...' : 'Sintonizando ' + ch.name + '...');
 
+            // Limpar player de esports se estava aberto
+            const iframe = document.getElementById('embedFrame');
+            if (iframe) {
+                iframe.src = 'about:blank';
+                iframe.style.display = 'none';
+            }
+            const bar = document.getElementById('activeStreamBar');
+            if (bar) bar.style.display = 'none';
+            activeEsportsStream = null;
+            activeEsportsMatch = null;
+
             const video = document.getElementById('webVideo');
+            video.style.display = 'block';
             if (hlsPlayer) {
                 hlsPlayer.destroy();
                 hlsPlayer = null;
@@ -1657,6 +1861,257 @@ function renderWebTVApp(host) {
 
         function escapeJs(str) {
             return (str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        }
+
+        // ==========================================
+        // CS2 & ESPORTS HUB (HLTV & Multi-Streams)
+        // ==========================================
+        let cs2Data = null;
+        let currentCsTab = 'matches';
+        let activeEsportsStream = null;
+        let activeEsportsMatch = null;
+
+        function openTvView() {
+            document.getElementById('futebolModal').style.display = 'none';
+            document.getElementById('cs2Modal').style.display = 'none';
+            document.getElementById('railTvBtn').classList.add('active');
+            document.getElementById('railFutBtn').classList.remove('active');
+            document.getElementById('railCsBtn').classList.remove('active');
+            if (activeEsportsStream) {
+                returnToLiveTv();
+            }
+        }
+
+        async function toggleCs2Hub() {
+            const modal = document.getElementById('cs2Modal');
+            const futModal = document.getElementById('futebolModal');
+            futModal.style.display = 'none';
+
+            if (modal.style.display === 'flex') {
+                modal.style.display = 'none';
+                document.getElementById('railCsBtn').classList.remove('active');
+                document.getElementById('railTvBtn').classList.add('active');
+                resetOverlayTimer();
+            } else {
+                modal.style.display = 'flex';
+                document.getElementById('railCsBtn').classList.add('active');
+                document.getElementById('railTvBtn').classList.remove('active');
+                document.getElementById('railFutBtn').classList.remove('active');
+                if (!cs2Data) {
+                    await loadCs2HubData();
+                } else {
+                    renderCs2HubUi(cs2Data);
+                }
+            }
+        }
+
+        function switchCsTab(tab) {
+            currentCsTab = tab;
+            const tabMatches = document.getElementById('tabCsMatches');
+            const tabRankings = document.getElementById('tabCsRankings');
+            const viewMatches = document.getElementById('csMatchesView');
+            const viewRankings = document.getElementById('csRankingsView');
+
+            if (tab === 'matches') {
+                tabMatches.classList.add('active');
+                tabRankings.classList.remove('active');
+                viewMatches.style.display = 'flex';
+                viewRankings.style.display = 'none';
+            } else {
+                tabMatches.classList.remove('active');
+                tabRankings.classList.add('active');
+                viewMatches.style.display = 'none';
+                viewRankings.style.display = 'block';
+            }
+        }
+
+        async function loadCs2HubData() {
+            const mContainer = document.getElementById('csMatchesContainer');
+            const rBody = document.getElementById('csRankingsBody');
+            mContainer.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:30px;">Carregando partidas de CS2 (Liquipedia / HLTV)...</div>';
+            rBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:30px; color:var(--text-muted);">Sincronizando ranking oficial HLTV...</td></tr>';
+
+            try {
+                const res = await fetch('/api/cs2/data');
+                cs2Data = await res.json();
+                renderCs2HubUi(cs2Data);
+            } catch (e) {
+                mContainer.innerHTML = '<div style="color:var(--danger); text-align:center; padding:20px;">Erro ao carregar dados do CS2 Hub.</div>';
+                rBody.innerHTML = '<tr><td colspan="5" style="color:var(--danger); text-align:center;">Erro ao sincronizar HLTV.</td></tr>';
+            }
+        }
+
+        function renderCs2HubUi(data) {
+            const mContainer = document.getElementById('csMatchesContainer');
+            const rBody = document.getElementById('csRankingsBody');
+
+            // 1. Render Partidas
+            if (data.matches && data.matches.length > 0) {
+                let mHtml = '';
+                data.matches.forEach((m, matchIdx) => {
+                    const brClass = m.isBrMatch ? ' is-br' : '';
+                    const brBadge = m.isBrMatch ? '<span style="background:rgba(16,185,129,0.2); color:#34d399; border:1px solid rgba(16,185,129,0.5); padding:2px 8px; border-radius:6px; font-size:11px; font-weight:800; margin-left:8px;">🇧🇷 JOGO BRASILEIRO</span>' : '';
+
+                    let streamsHtml = '';
+                    (m.streams || []).forEach((st, stIdx) => {
+                        let btnClass = 'cs-stream-btn';
+                        if (st.isOfficial) btnClass += ' official';
+                        else if (st.isFeatured) btnClass += ' featured';
+                        else if (st.platform === 'kick') btnClass += ' kick';
+
+                        let platformIcon = '📺';
+                        if (st.platform === 'twitch') platformIcon = '🟣';
+                        else if (st.platform === 'youtube') platformIcon = '🔴';
+                        else if (st.platform === 'kick') platformIcon = '🟢';
+
+                        streamsHtml += '<button class="' + btnClass + '" onclick="playCsStream(\\'' + m.id + '\\', ' + stIdx + ')">' + platformIcon + ' ' + st.name + '</button>';
+                    });
+
+                    mHtml += '<div class="cs-match-card' + brClass + '">' +
+                        '<div class="cs-match-info">' +
+                            '<div class="cs-tourney">🏆 ' + m.tournament + ' • <span style="color:#f59e0b;">' + m.format + '</span>' + brBadge + '</div>' +
+                            '<div class="cs-match-teams">' +
+                                '<div class="cs-team">' +
+                                    '<img class="cs-team-logo" src="' + m.team1Logo + '" onerror="this.src=\\'https://liquipedia.net/commons/images/thumb/a/aa/FURIA_Esports_allmode.png/51px-FURIA_Esports_allmode.png\\'">' +
+                                    '<span>' + m.team1 + '</span>' +
+                                '</div>' +
+                                '<span class="cs-vs">VS</span>' +
+                                '<div class="cs-team">' +
+                                    '<img class="cs-team-logo" src="' + m.team2Logo + '" onerror="this.src=\\'https://liquipedia.net/commons/images/thumb/5/5b/BetBoom_Team_2024_allmode.png/56px-BetBoom_Team_2024_allmode.png\\'">' +
+                                    '<span>' + m.team2 + '</span>' +
+                                '</div>' +
+                            '</div>' +
+                            '<div style="font-size:12px; color:var(--text-muted); margin-top:2px;">🕒 ' + m.date + ' às ' + m.time + ' (Horário de Brasília)</div>' +
+                        '</div>' +
+                        '<div class="cs-streams-box">' +
+                            '<div style="font-size:11px; font-weight:800; color:var(--text-muted); width:100%; text-align:right; margin-bottom:2px;">ESCOLHER TRANSMISSÃO:</div>' +
+                            streamsHtml +
+                        '</div>' +
+                    '</div>';
+                });
+                mContainer.innerHTML = mHtml;
+            } else {
+                mContainer.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:30px;">Nenhuma partida de CS2 encontrada no momento.</div>';
+            }
+
+            // 2. Render Rankings HLTV
+            if (data.rankings && data.rankings.length > 0) {
+                let rHtml = '';
+                data.rankings.forEach(item => {
+                    const isBrRow = item.isBr ? ' style="background:rgba(16,185,129,0.08);"' : '';
+                    const brTag = item.isBr ? '<span style="background:rgba(16,185,129,0.2); color:#10b981; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:800; margin-left:8px;">TOP BR</span>' : '';
+                    let posColor = '#fff';
+                    if (item.rank <= 3) posColor = '#f59e0b';
+                    else if (item.rank <= 10) posColor = '#38bdf8';
+
+                    rHtml += '<tr' + isBrRow + '>' +
+                        '<td><span style="font-weight:900; font-size:14px; color:' + posColor + ';">#' + item.rank + '</span></td>' +
+                        '<td>' +
+                            '<div class="team-cell">' +
+                                '<img class="team-logo" src="' + item.logo + '" onerror="this.style.display=\\'none\\'">' +
+                                '<span style="font-size:14px;">' + item.flag + ' ' + item.team + '</span>' +
+                                brTag +
+                            '</div>' +
+                        '</td>' +
+                        '<td><span style="color:var(--text-muted); font-size:13px;">' + item.region + '</span></td>' +
+                        '<td><span class="hltv-badge">' + item.points + ' pts</span></td>' +
+                        '<td><span style="font-weight:700; color:' + (item.change.includes('+') ? '#10b981' : (item.change.includes('-') ? '#ef4444' : '#94a3b8')) + ';">' + item.change + '</span></td>' +
+                    '</tr>';
+                });
+                rBody.innerHTML = rHtml;
+            }
+        }
+
+        function playCsStream(matchId, streamIdx) {
+            if (!cs2Data || !cs2Data.matches) return;
+            const match = cs2Data.matches.find(m => m.id === matchId);
+            if (!match) return;
+            const stream = (match.streams && match.streams[streamIdx]) ? match.streams[streamIdx] : match.streams[0];
+            playEsportsStream(stream, match);
+        }
+
+        function playEsportsStream(stream, match) {
+            activeEsportsStream = stream;
+            activeEsportsMatch = match;
+
+            // Pausar player de TV tradicional
+            const video = document.getElementById('webVideo');
+            if (video) {
+                video.pause();
+                video.removeAttribute('src');
+                video.style.display = 'none';
+            }
+            if (hlsPlayer) {
+                hlsPlayer.destroy();
+                hlsPlayer = null;
+            }
+
+            const iframe = document.getElementById('embedFrame');
+            const curHost = window.location.hostname || 'localhost';
+            let embedUrl = '';
+
+            if (stream.platform === 'twitch') {
+                embedUrl = 'https://player.twitch.tv/?channel=' + encodeURIComponent(stream.channel) +
+                    '&parent=' + encodeURIComponent(curHost) +
+                    '&parent=localhost&parent=tvjuggo.duckdns.org&parent=35.188.165.122&autoplay=true&muted=false';
+            } else if (stream.platform === 'youtube') {
+                embedUrl = 'https://www.youtube-nocookie.com/embed?listType=search&list=' + encodeURIComponent(stream.channel + ' cs2 ao vivo') + '&autoplay=1';
+            } else if (stream.platform === 'kick') {
+                embedUrl = 'https://player.kick.com/' + encodeURIComponent(stream.channel) + '?autoplay=true&muted=false';
+            }
+
+            iframe.src = embedUrl;
+            iframe.style.display = 'block';
+
+            // Configurar barra de controle flutuante de streams
+            const bar = document.getElementById('activeStreamBar');
+            const title = document.getElementById('activeStreamTitle');
+            const options = document.getElementById('activeStreamOptions');
+
+            title.innerText = '🎯 ' + match.team1 + ' vs ' + match.team2 + ' (' + match.tournament + ')';
+
+            let optsHtml = '';
+            (match.streams || []).forEach((st, idx) => {
+                const isCur = (st.channel === stream.channel && st.platform === stream.platform);
+                const bg = isCur ? 'var(--primary)' : 'rgba(255,255,255,0.08)';
+                const border = isCur ? 'rgba(59,130,246,0.8)' : 'rgba(255,255,255,0.15)';
+                optsHtml += '<button onclick="playCsStream(\\'' + match.id + '\\', ' + idx + ')" style="background:' + bg + '; border:1px solid ' + border + '; color:#fff; padding:4px 10px; border-radius:14px; font-size:11px; font-weight:700; cursor:pointer;">' + st.name + '</button>';
+            });
+            options.innerHTML = optsHtml;
+            bar.style.display = 'flex';
+
+            // Atualizar status HUD
+            document.getElementById('botProgramTitle').innerText = match.team1 + ' vs ' + match.team2;
+            document.getElementById('botChannelName').innerText = 'Transmissão: ' + stream.name;
+            document.getElementById('topChannelName').innerText = match.tournament;
+
+            // Fechar modal
+            document.getElementById('cs2Modal').style.display = 'none';
+            document.getElementById('railCsBtn').classList.remove('active');
+            hideOverlayNow();
+        }
+
+        function returnToLiveTv() {
+            const iframe = document.getElementById('embedFrame');
+            if (iframe) {
+                iframe.src = 'about:blank';
+                iframe.style.display = 'none';
+            }
+
+            const video = document.getElementById('webVideo');
+            if (video) video.style.display = 'block';
+
+            const bar = document.getElementById('activeStreamBar');
+            if (bar) bar.style.display = 'none';
+
+            activeEsportsStream = null;
+            activeEsportsMatch = null;
+
+            if (activeChannel) {
+                playChannel(activeChannel);
+            } else if (allChannels.length > 0) {
+                playChannel(allChannels[0]);
+            }
         }
 
         init();

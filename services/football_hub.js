@@ -1,20 +1,35 @@
 /**
- * Juggo TV - Futebol Hub: Classificações & Jogos em Tempo Real
- * - Dados ao vivo da ESPN (Brasileirão, Champions, Premier League, La Liga, Serie A, Libertadores)
- * - Tabela de classificação com escudos oficiais, pontos, vitórias, saldo de gols e zonas de tabela
- * - Jogos da rodada com vinculação direta aos canais de transmissão do Juggo TV
+ * Juggo TV - Central Poliesportiva (Futebol, Basquete, Vôlei, NFL)
+ * - Dados ao vivo da ESPN:
+ *   - ⚽ Futebol: Brasileirão Série A, Champions League, Premier League, La Liga, Serie A, Libertadores
+ *   - 🏀 Basquete: NBA (Conferências Leste e Oeste) e NCAA Basquete
+ *   - 🏐 Vôlei: Torneios e Ligas Internacionais
+ *   - 🏈 Futebol Americano: NFL
+ * - Tabelas de classificação em tempo real com escudos e estatísticas
+ * - Jogos com vinculação direta aos canais de transmissão do Juggo TV (ESPN, SporTV, Premiere, etc.)
  */
 
 const https = require('https');
 const zlib = require('zlib');
 
 const LEAGUES = [
-    { id: 'bra.1', name: 'Brasileirão Série A', flag: '🇧🇷', defaultChannel: 'Premiere 1' },
-    { id: 'uefa.champions', name: 'Champions League', flag: '🏆', defaultChannel: 'TNT' },
-    { id: 'eng.1', name: 'Premier League', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', defaultChannel: 'ESPN' },
-    { id: 'esp.1', name: 'La Liga', flag: '🇪🇸', defaultChannel: 'ESPN' },
-    { id: 'ita.1', name: 'Serie A Italiana', flag: '🇮🇹', defaultChannel: 'ESPN 2' },
-    { id: 'conmebol.libertadores', name: 'Libertadores', flag: '🌎', defaultChannel: 'ESPN / SporTV' }
+    // Futebol
+    { id: 'bra.1', sport: 'soccer', name: 'Brasileirão Série A', category: 'Futebol', flag: '🇧🇷', defaultChannel: 'Premiere 1' },
+    { id: 'uefa.champions', sport: 'soccer', name: 'Champions League', category: 'Futebol', flag: '🏆', defaultChannel: 'TNT' },
+    { id: 'eng.1', sport: 'soccer', name: 'Premier League', category: 'Futebol', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', defaultChannel: 'ESPN' },
+    { id: 'esp.1', sport: 'soccer', name: 'La Liga', category: 'Futebol', flag: '🇪🇸', defaultChannel: 'ESPN' },
+    { id: 'ita.1', sport: 'soccer', name: 'Serie A Italiana', category: 'Futebol', flag: '🇮🇹', defaultChannel: 'ESPN 2' },
+    { id: 'conmebol.libertadores', sport: 'soccer', name: 'Libertadores', category: 'Futebol', flag: '🌎', defaultChannel: 'ESPN / SporTV' },
+
+    // Basquete
+    { id: 'nba', sport: 'basketball', name: 'NBA (Basquete)', category: 'Basquete', flag: '🏀', defaultChannel: 'ESPN 2 / SporTV 2' },
+    { id: 'mens-college-basketball', sport: 'basketball', name: 'NCAA Basquete', category: 'Basquete', flag: '🏀', defaultChannel: 'ESPN 3' },
+
+    // Vôlei
+    { id: 'mens-college-volleyball', sport: 'volleyball', name: 'Vôlei Internacional', category: 'Vôlei', flag: '🏐', defaultChannel: 'SporTV 2' },
+
+    // Futebol Americano
+    { id: 'nfl', sport: 'football', name: 'NFL (Futebol Americano)', category: 'Futebol Americano', flag: '🏈', defaultChannel: 'ESPN 2' }
 ];
 
 const cache = new Map();
@@ -22,7 +37,7 @@ const CACHE_TTL = 15 * 60 * 1000; // 15 minutos
 
 function fetchJson(url) {
     return new Promise((resolve) => {
-        https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0', 'Accept-Encoding': 'gzip, deflate' }, timeout: 8000 }, (res) => {
+        https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', 'Accept-Encoding': 'gzip, deflate' }, timeout: 8000 }, (res) => {
             if (res.statusCode !== 200) return resolve(null);
             const chunks = [];
             res.on('data', c => chunks.push(c));
@@ -48,38 +63,52 @@ async function getLeagueData(leagueId) {
     }
 
     const leagueInfo = LEAGUES.find(l => l.id === leagueId) || LEAGUES[0];
-    const standingsUrl = `https://site.api.espn.com/apis/v2/sports/soccer/${leagueId}/standings`;
-    const scoreboardUrl = `https://site.api.espn.com/apis/site/v2/sports/soccer/${leagueId}/scoreboard`;
+    const sportType = leagueInfo.sport || 'soccer';
+    const standingsUrl = `https://site.api.espn.com/apis/v2/sports/${sportType}/${leagueId}/standings`;
+    const scoreboardUrl = `https://site.api.espn.com/apis/site/v2/sports/${sportType}/${leagueId}/scoreboard`;
 
     const [standingsRaw, scoreboardRaw] = await Promise.all([
         fetchJson(standingsUrl),
         fetchJson(scoreboardUrl)
     ]);
 
-    // Parse Standings
+    // Parse Standings (Compatível com Futebol, NBA, Vôlei e NFL)
     const standings = [];
     try {
-        const entries = standingsRaw?.children?.[0]?.standings?.entries || [];
+        let entries = [];
+        if (standingsRaw?.children && standingsRaw.children.length > 0) {
+            standingsRaw.children.forEach(group => {
+                const confName = group.name ? ` (${group.name})` : '';
+                (group.standings?.entries || []).forEach(e => {
+                    e._conf = confName;
+                    entries.push(e);
+                });
+            });
+        }
+
         entries.forEach((e, idx) => {
             const team = e.team || {};
             const stats = {};
             (e.stats || []).forEach(s => { stats[s.name] = s.displayValue || s.value; });
 
+            const pts = stats.points || stats.W || stats.wins || '0';
+            const played = stats.gamesPlayed || stats.GP || (parseInt(stats.wins || 0) + parseInt(stats.losses || 0)).toString();
+            const won = stats.wins || stats.W || '0';
+            const diff = stats.pointDifferential || stats.DIFF || stats.PCT || '0';
+
             standings.push({
                 position: idx + 1,
-                teamName: team.displayName || team.name || 'Clube',
+                teamName: (team.displayName || team.name || 'Equipe') + (e._conf || ''),
                 shortName: team.shortDisplayName || team.abbreviation || team.name,
-                logo: team.logos?.[0]?.href || 'https://a.espncdn.com/i/teamlogos/soccer/500/default-team-logo.png',
-                points: stats.points || '0',
-                played: stats.gamesPlayed || '0',
-                won: stats.wins || '0',
-                drawn: stats.ties || '0',
-                lost: stats.losses || '0',
-                gd: stats.pointDifferential || '0'
+                logo: team.logos?.[0]?.href || 'https://a.espncdn.com/i/teamlogos/default-team-logo.png',
+                points: pts,
+                played: played,
+                won: won,
+                gd: diff
             });
         });
     } catch (e) {
-        console.error(`[FutebolHub] Erro parse standings ${leagueId}:`, e.message);
+        console.error(`[SportsHub] Erro parse standings ${leagueId}:`, e.message);
     }
 
     // Parse Matches
@@ -108,10 +137,10 @@ async function getLeagueData(leagueId) {
                 id: e.id,
                 title: e.name,
                 homeTeam: home?.team?.displayName || 'Casa',
-                homeLogo: home?.team?.logo || 'https://a.espncdn.com/i/teamlogos/soccer/500/default-team-logo.png',
+                homeLogo: home?.team?.logo || 'https://a.espncdn.com/i/teamlogos/default-team-logo.png',
                 homeScore: home?.score || '',
                 awayTeam: away?.team?.displayName || 'Fora',
-                awayLogo: away?.team?.logo || 'https://a.espncdn.com/i/teamlogos/soccer/500/default-team-logo.png',
+                awayLogo: away?.team?.logo || 'https://a.espncdn.com/i/teamlogos/default-team-logo.png',
                 awayScore: away?.score || '',
                 date: dateStr,
                 time: timeStr,
@@ -121,7 +150,7 @@ async function getLeagueData(leagueId) {
             });
         });
     } catch (e) {
-        console.error(`[FutebolHub] Erro parse matches ${leagueId}:`, e.message);
+        console.error(`[SportsHub] Erro parse matches ${leagueId}:`, e.message);
     }
 
     const data = {
