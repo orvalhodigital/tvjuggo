@@ -22,6 +22,9 @@ const footballHub = require('./services/football_hub');
 const channelHealth = require('./services/channel_health');
 const aiScheduler = require('./services/ai_scheduler');
 const cs2Hub = require('./services/cs2_hub');
+const userManager = require('./services/user_manager');
+const usersPanel = require('./services/users_panel');
+const webPlayerNetflix = require('./services/web_player_netflix');
 
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
@@ -368,8 +371,32 @@ const server = http.createServer((req, res) => {
         }
     }
 
-    // 1. Web TV App (Layout IPTV Smart TV Moderno)
-    if (pathname === '/' || pathname === '/index.html') {
+    function isUserAdmin(req) {
+        const cookieHeader = req.headers.cookie || '';
+        return cookieHeader.includes('juggo_admin_session=neto_authenticated');
+    }
+
+    // Painel de Gestão de Usuários (/users)
+    if (pathname === '/users' || pathname === '/users/' || pathname === '/usuarios') {
+        if (!isUserAdmin(req)) {
+            res.writeHead(302, { 'Location': '/admin?error=login_required' });
+            res.end();
+            return;
+        }
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end(usersPanel.renderUsersPanel({ username: 'admin', role: 'admin' }));
+        return;
+    }
+
+    // 1. Web TV App (Layout Cinema Netflix & Match Center Fluido)
+    if (pathname === '/' || pathname === '/index.html' || pathname === '/netflix') {
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end(webPlayerNetflix.renderNetflixWebTVApp(clientHost, APP_NAME));
+        return;
+    }
+
+    // Modo Legado Smart TV (Grid com menus translúcidos)
+    if (pathname === '/legacy' || pathname === '/smart') {
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         res.end(renderWebTVApp(clientHost));
         return;
@@ -470,6 +497,176 @@ const server = http.createServer((req, res) => {
             });
             res.end(JSON.stringify(data || { error: 'Liga não encontrada' }));
         });
+        return;
+    }
+
+    // 5.1 API de Jogos do Dia e Semana com Metadados Ricos (Logos, Horários, Transmissões)
+    if (pathname === '/api/futebol/today-matches') {
+        const matches = footballHub.getTodayMatches();
+        res.writeHead(200, {
+            'Content-Type': 'application/json; charset=utf-8',
+            'Access-Control-Allow-Origin': '*'
+        });
+        res.end(JSON.stringify(matches));
+        return;
+    }
+
+    // 5.2 API de Estatísticas Ao Vivo de Partida (Match Center: Pressão, Posse, Escanteios, Chutes)
+    if (pathname.startsWith('/api/futebol/match/') && pathname.endsWith('/stats')) {
+        const parts = pathname.split('/');
+        const eventId = parts[4]; // /api/futebol/match/:id/stats
+        const leagueCode = parsedUrl.searchParams.get('league') || 'bra.1';
+
+        footballHub.getMatchLiveStats(leagueCode, eventId).then(stats => {
+            res.writeHead(200, {
+                'Content-Type': 'application/json; charset=utf-8',
+                'Access-Control-Allow-Origin': '*'
+            });
+            res.end(JSON.stringify(stats));
+        }).catch(err => {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: err.message }));
+        });
+        return;
+    }
+
+    // 5.3 API de Heartbeat para Controle Estrito de 1 Tela Simultânea
+    if (pathname === '/api/user/heartbeat' && req.method === 'POST') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            try {
+                const data = body ? JSON.parse(body) : {};
+                const token = data.token;
+                const screenId = data.screenId;
+                const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+                const userAgent = req.headers['user-agent'] || '';
+                const result = userManager.registerScreenHeartbeat(token, screenId, clientIp, userAgent);
+                res.writeHead(200, {
+                    'Content-Type': 'application/json; charset=utf-8',
+                    'Access-Control-Allow-Origin': '*'
+                });
+                res.end(JSON.stringify(result));
+            } catch (e) {
+                res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+                res.end(JSON.stringify({ allowed: true }));
+            }
+        });
+        return;
+    }
+
+    // 5.4 API CRUD de Usuários (/api/users)
+    if (pathname === '/api/users' && req.method === 'GET') {
+        if (!isUserAdmin(req)) {
+            res.writeHead(401, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Não autorizado' }));
+            return;
+        }
+        res.writeHead(200, {
+            'Content-Type': 'application/json; charset=utf-8',
+            'Access-Control-Allow-Origin': '*'
+        });
+        res.end(JSON.stringify(userManager.getAllUsers()));
+        return;
+    }
+
+    if (pathname === '/api/users' && req.method === 'POST') {
+        if (!isUserAdmin(req)) {
+            res.writeHead(401, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Não autorizado' }));
+            return;
+        }
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            try {
+                const data = JSON.parse(body);
+                const newUser = userManager.createUser(data);
+                res.writeHead(201, { 'Content-Type': 'application/json; charset=utf-8' });
+                res.end(JSON.stringify(newUser));
+            } catch (err) {
+                res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+                res.end(JSON.stringify({ error: err.message }));
+            }
+        });
+        return;
+    }
+
+    if (pathname.startsWith('/api/users/') && pathname.endsWith('/renew') && req.method === 'POST') {
+        if (!isUserAdmin(req)) {
+            res.writeHead(401, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Não autorizado' }));
+            return;
+        }
+        const id = pathname.replace('/api/users/', '').replace('/renew', '');
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            try {
+                const data = body ? JSON.parse(body) : {};
+                const days = parseInt(data.days) || 30;
+                const renewed = userManager.renewUser(id, days);
+                res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+                res.end(JSON.stringify({ success: true, user: renewed }));
+            } catch (err) {
+                res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+                res.end(JSON.stringify({ error: err.message }));
+            }
+        });
+        return;
+    }
+
+    if (pathname.startsWith('/api/users/') && pathname.endsWith('/kick') && req.method === 'POST') {
+        if (!isUserAdmin(req)) {
+            res.writeHead(401, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Não autorizado' }));
+            return;
+        }
+        const id = pathname.replace('/api/users/', '').replace('/kick', '');
+        const kicked = userManager.kickUserSession(id);
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ success: true, message: `Desconectadas ${kicked} sessão(ões) ativa(s).` }));
+        return;
+    }
+
+    if (pathname.startsWith('/api/users/') && req.method === 'PUT') {
+        if (!isUserAdmin(req)) {
+            res.writeHead(401, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Não autorizado' }));
+            return;
+        }
+        const id = pathname.replace('/api/users/', '');
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            try {
+                const data = JSON.parse(body);
+                const updated = userManager.updateUser(id, data);
+                res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+                res.end(JSON.stringify(updated));
+            } catch (err) {
+                res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+                res.end(JSON.stringify({ error: err.message }));
+            }
+        });
+        return;
+    }
+
+    if (pathname.startsWith('/api/users/') && req.method === 'DELETE') {
+        if (!isUserAdmin(req)) {
+            res.writeHead(401, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Não autorizado' }));
+            return;
+        }
+        const id = pathname.replace('/api/users/', '');
+        try {
+            userManager.deleteUser(id);
+            res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(JSON.stringify({ success: true, message: 'Usuário excluído com sucesso.' }));
+        } catch (err) {
+            res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(JSON.stringify({ error: err.message }));
+        }
         return;
     }
 

@@ -1,0 +1,14 @@
+[
+  {
+    "id": "usr_admin",
+    "username": "admin",
+    "password": "neto",
+    "name": "Administrador Master",
+    "role": "admin",
+    "status": "active",
+    "maxScreens": 1,
+    "expiresAt": null,
+    "createdAt": "2026-10-16T13:00:00.000Z",
+    "notes": "Conta mestre de administração"
+  }
+]

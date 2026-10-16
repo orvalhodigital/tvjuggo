@@ -1,128 +1,32 @@
 #EXTM3U url-tvg="https://epgshare01.online/epgshare01/epg_ripper_BR1.xml.gz,https://epg.pw/xmltv/epg_BR.xml.gz" x-tvg-url="https://epgshare01.online/epgshare01/epg_ripper_BR1.xml.gz,https://epg.pw/xmltv/epg_BR.xml.gz"
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [13/10 13:45] Lens x Sporting CP (CBSSN / Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/tnt.png" group-title="⚽ Jogos do Dia",⚽ [13/10 13:45] Lens x Sporting CP (CBSSN / Paramount+)
-http://topdnstop.lat:80/jajaita/123456/235790.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [13/10 13:45] Sabah FK x Slavia Prague (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/tnt.png" group-title="⚽ Jogos do Dia",⚽ [13/10 13:45] Sabah FK x Slavia Prague (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/235790.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [13/10 15:45] Bristol City x Blackburn Rovers (ESPN 4)" tvg-logo="/logos/espn4.png" group-title="⚽ Jogos do Dia",⚽ [13/10 15:45] Bristol City x Blackburn Rovers (ESPN 4)
-http://topdnstop.lat:80/jajaita/123456/437936.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [13/10 15:45] Burnley x Charlton Athletic (ESPN 4)" tvg-logo="/logos/espn4.png" group-title="⚽ Jogos do Dia",⚽ [13/10 15:45] Burnley x Charlton Athletic (ESPN 4)
-http://topdnstop.lat:80/jajaita/123456/437936.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [13/10 15:45] Cardiff City x Watford (ESPN 4)" tvg-logo="/logos/espn4.png" group-title="⚽ Jogos do Dia",⚽ [13/10 15:45] Cardiff City x Watford (ESPN 4)
-http://topdnstop.lat:80/jajaita/123456/437936.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [13/10 15:45] Millwall x Swansea City (ESPN 4)" tvg-logo="/logos/espn4.png" group-title="⚽ Jogos do Dia",⚽ [13/10 15:45] Millwall x Swansea City (ESPN 4)
-http://topdnstop.lat:80/jajaita/123456/437936.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [13/10 15:45] Wolverhampton Wanderers x Bolton Wanderers (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/tnt.png" group-title="⚽ Jogos do Dia",⚽ [13/10 15:45] Wolverhampton Wanderers x Bolton Wanderers (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/235790.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [13/10 15:45] Wrexham x West Bromwich Albion (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/tnt.png" group-title="⚽ Jogos do Dia",⚽ [13/10 15:45] Wrexham x West Bromwich Albion (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/235790.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [13/10 16:00] Birmingham City x Preston North End (ESPN 4)" tvg-logo="/logos/espn4.png" group-title="⚽ Jogos do Dia",⚽ [13/10 16:00] Birmingham City x Preston North End (ESPN 4)
-http://topdnstop.lat:80/jajaita/123456/437936.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [13/10 16:00] Stoke City x Middlesbrough (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/tnt.png" group-title="⚽ Jogos do Dia",⚽ [13/10 16:00] Stoke City x Middlesbrough (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/235790.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [13/10 16:00] Arsenal x Lille (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/tnt.png" group-title="⚽ Jogos do Dia",⚽ [13/10 16:00] Arsenal x Lille (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/235790.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [13/10 16:00] Atlético Madrid x Manchester United (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/tnt.png" group-title="⚽ Jogos do Dia",⚽ [13/10 16:00] Atlético Madrid x Manchester United (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/235790.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [13/10 16:00] Galatasaray x Barcelona (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/tnt.png" group-title="⚽ Jogos do Dia",⚽ [13/10 16:00] Galatasaray x Barcelona (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/235790.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [13/10 16:00] Internazionale x Club Brugge (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/tnt.png" group-title="⚽ Jogos do Dia",⚽ [13/10 16:00] Internazionale x Club Brugge (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/235790.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [13/10 16:00] RB Leipzig x PSV Eindhoven (CBSSN / Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/tnt.png" group-title="⚽ Jogos do Dia",⚽ [13/10 16:00] RB Leipzig x PSV Eindhoven (CBSSN / Paramount+)
-http://topdnstop.lat:80/jajaita/123456/235790.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [13/10 16:00] Viking FK x Bayern Munich (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/tnt.png" group-title="⚽ Jogos do Dia",⚽ [13/10 16:00] Viking FK x Bayern Munich (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/235790.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [13/10 16:00] Villarreal x Napoli (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/tnt.png" group-title="⚽ Jogos do Dia",⚽ [13/10 16:00] Villarreal x Napoli (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/235790.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [13/10 19:30] Athletic x Londrina (Premiere / SporTV)" tvg-logo="http://logos.appscms.xyz/logos/2025/sportv.png" group-title="⚽ Jogos do Dia",⚽ [13/10 19:30] Athletic x Londrina (Premiere / SporTV)
-http://topdnstop.lat:80/jajaita/123456/236284.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [13/10 21:30] Boca Juniors x Vasco da Gama (ESPN / SporTV)" tvg-logo="/logos/espn.png" group-title="⚽ Jogos do Dia",⚽ [13/10 21:30] Boca Juniors x Vasco da Gama (ESPN / SporTV)
-http://topdnstop.lat:80/jajaita/123456/437918.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [14/10 21:30] Fluminense x Palmeiras (ESPN / SporTV)" tvg-logo="/logos/espn.png" group-title="📅 Jogos da Semana",⚽ [14/10 21:30] Fluminense x Palmeiras (ESPN / SporTV)
-http://topdnstop.lat:80/jajaita/123456/437918.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [15/10 13:45] AZ Alkmaar x Hapoel Be'er (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="📅 Jogos da Semana",⚽ [15/10 13:45] AZ Alkmaar x Hapoel Be'er (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/236242.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [15/10 13:45] Lech Poznan x Bayer Leverkusen (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="📅 Jogos da Semana",⚽ [15/10 13:45] Lech Poznan x Bayer Leverkusen (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/236242.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [15/10 13:45] Lyon x Crystal Palace (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="📅 Jogos da Semana",⚽ [15/10 13:45] Lyon x Crystal Palace (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/236242.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [15/10 13:45] NK Celje x Omonia Nicosia (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="📅 Jogos da Semana",⚽ [15/10 13:45] NK Celje x Omonia Nicosia (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/236242.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [15/10 13:45] RB Salzburg x AC Milan (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="📅 Jogos da Semana",⚽ [15/10 13:45] RB Salzburg x AC Milan (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/236242.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [15/10 13:45] Sparta Prague x Lillestrom (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="📅 Jogos da Semana",⚽ [15/10 13:45] Sparta Prague x Lillestrom (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/236242.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [15/10 13:45] Torreense x Sunderland (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="📅 Jogos da Semana",⚽ [15/10 13:45] Torreense x Sunderland (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/236242.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [15/10 13:45] Union St.-Gilloise x Real Sociedad (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="📅 Jogos da Semana",⚽ [15/10 13:45] Union St.-Gilloise x Real Sociedad (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/236242.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [15/10 13:45] CSKA Sofia x AS Monaco (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="📅 Jogos da Semana",⚽ [15/10 13:45] CSKA Sofia x AS Monaco (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/236242.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [15/10 13:45] CSU Craiova x Getafe (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="📅 Jogos da Semana",⚽ [15/10 13:45] CSU Craiova x Getafe (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/236242.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [15/10 13:45] Egnatia x FC Midtjylland (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="📅 Jogos da Semana",⚽ [15/10 13:45] Egnatia x FC Midtjylland (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/236242.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [15/10 13:45] FC Lugano x Red Star Belgrade (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="📅 Jogos da Semana",⚽ [15/10 13:45] FC Lugano x Red Star Belgrade (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/236242.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [15/10 13:45] Hajduk Split x Ajax Amsterdam (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="📅 Jogos da Semana",⚽ [15/10 13:45] Hajduk Split x Ajax Amsterdam (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/236242.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [15/10 13:45] KAA Gent x AGF (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="📅 Jogos da Semana",⚽ [15/10 13:45] KAA Gent x AGF (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/236242.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [15/10 13:45] KuPS Kuopio x Trabzonspor (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="📅 Jogos da Semana",⚽ [15/10 13:45] KuPS Kuopio x Trabzonspor (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/236242.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [15/10 13:45] Mjällby AIF x Inter D'Escaldes (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="📅 Jogos da Semana",⚽ [15/10 13:45] Mjällby AIF x Inter D'Escaldes (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/236242.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [15/10 13:45] Panathinaikos x Borac Banja Luka (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="📅 Jogos da Semana",⚽ [15/10 13:45] Panathinaikos x Borac Banja Luka (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/236242.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [15/10 13:45] Riga FC x Kairat Almaty (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="📅 Jogos da Semana",⚽ [15/10 13:45] Riga FC x Kairat Almaty (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/236242.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [15/10 16:00] AFC Bournemouth x SK Sturm Graz (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="📅 Jogos da Semana",⚽ [15/10 16:00] AFC Bournemouth x SK Sturm Graz (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/236242.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [15/10 16:00] Benfica x Celtic (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="📅 Jogos da Semana",⚽ [15/10 16:00] Benfica x Celtic (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/236242.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [15/10 16:00] Celta Vigo x Juventus (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="📅 Jogos da Semana",⚽ [15/10 16:00] Celta Vigo x Juventus (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/236242.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [15/10 16:00] Dinamo Zagreb x Anderlecht (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="📅 Jogos da Semana",⚽ [15/10 16:00] Dinamo Zagreb x Anderlecht (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/236242.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [15/10 16:00] Ferencvaros x Viktoria Plzen (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="📅 Jogos da Semana",⚽ [15/10 16:00] Ferencvaros x Viktoria Plzen (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/236242.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [15/10 16:00] Jagiellonia Bialystok x Ararat-Armenia (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="📅 Jogos da Semana",⚽ [15/10 16:00] Jagiellonia Bialystok x Ararat-Armenia (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/236242.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [15/10 16:00] Marseille x Olympiacos (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="📅 Jogos da Semana",⚽ [15/10 16:00] Marseille x Olympiacos (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/236242.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [15/10 16:00] NEC Nijmegen x Levski Sofia (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="📅 Jogos da Semana",⚽ [15/10 16:00] NEC Nijmegen x Levski Sofia (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/236242.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [15/10 16:00] Stade Rennais x OFI Crete (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="📅 Jogos da Semana",⚽ [15/10 16:00] Stade Rennais x OFI Crete (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/236242.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [15/10 16:00] TSG Hoffenheim x Besiktas (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="📅 Jogos da Semana",⚽ [15/10 16:00] TSG Hoffenheim x Besiktas (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/236242.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [15/10 16:00] Atalanta x Pafos (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="📅 Jogos da Semana",⚽ [15/10 16:00] Atalanta x Pafos (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/236242.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [15/10 16:00] Brighton & Hove Albion x Kauno Zalgiris (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="📅 Jogos da Semana",⚽ [15/10 16:00] Brighton & Hove Albion x Kauno Zalgiris (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/236242.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [15/10 16:00] F.C. København x Braga (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="📅 Jogos da Semana",⚽ [15/10 16:00] F.C. København x Braga (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/236242.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [15/10 16:00] FC Twente x FC Thun (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="📅 Jogos da Semana",⚽ [15/10 16:00] FC Twente x FC Thun (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/236242.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [15/10 16:00] Heart of Midlothian x FC Nordsjælland (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="📅 Jogos da Semana",⚽ [15/10 16:00] Heart of Midlothian x FC Nordsjælland (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/236242.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [15/10 16:00] SC Freiburg x Jablonec (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="📅 Jogos da Semana",⚽ [15/10 16:00] SC Freiburg x Jablonec (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/236242.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [15/10 16:00] Sint-Truidense x Iberia 1999 (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="📅 Jogos da Semana",⚽ [15/10 16:00] Sint-Truidense x Iberia 1999 (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/236242.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [15/10 16:00] SK Brann x Lincoln Red Imps (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="📅 Jogos da Semana",⚽ [15/10 16:00] SK Brann x Lincoln Red Imps (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/236242.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [16/10 15:30] Leganés x Córdoba (ESPN 3)" tvg-logo="/logos/espn3.png" group-title="📅 Jogos da Semana",⚽ [16/10 15:30] Leganés x Córdoba (ESPN 3)
-http://topdnstop.lat:80/jajaita/123456/437930.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [16/10 15:30] Eintracht Frankfurt x FC Cologne (CazéTV / SporTV)" tvg-logo="http://logos.appscms.xyz/logos/2025/sportv.png" group-title="📅 Jogos da Semana",⚽ [16/10 15:30] Eintracht Frankfurt x FC Cologne (CazéTV / SporTV)
-http://topdnstop.lat:80/jajaita/123456/236284.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [16/10 15:45] Frosinone x Sassuolo (Paramount+)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="📅 Jogos da Semana",⚽ [16/10 15:45] Frosinone x Sassuolo (Paramount+)
-http://topdnstop.lat:80/jajaita/123456/236242.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [16/10 15:45] Le Mans x Toulouse (CazéTV)" tvg-logo="http://logos.appscms.xyz/logos/2025/cazetv.png" group-title="📅 Jogos da Semana",⚽ [16/10 15:45] Le Mans x Toulouse (CazéTV)
-http://topdnstop.lat:80/jajaita/123456/236284.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [16/10 16:00] Deportivo x Levante (ESPN Deportes / ESPN+)" tvg-logo="/logos/espn.png" group-title="📅 Jogos da Semana",⚽ [16/10 16:00] Deportivo x Levante (ESPN Deportes / ESPN+)
-http://topdnstop.lat:80/jajaita/123456/437918.m3u8
-#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="⚽ [16/10 20:00] Mirassol x Internacional (Premiere)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="📅 Jogos da Semana",⚽ [16/10 20:00] Mirassol x Internacional (Premiere)
-http://topdnstop.lat:80/jajaita/123456/236242.m3u8
+#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="Eintracht Frankfurt x FC Cologne - 16/10/2026 às 15:30 (Ao vivo em CazéTV)" tvg-logo="http://logos.appscms.xyz/logos/2025/cazetv.png" group-title="⚽ Jogos do Dia",Eintracht Frankfurt x FC Cologne - 16/10/2026 às 15:30 (Ao vivo em CazéTV)
+http://topdnstop.lat:80/jajaita/123456/1773445.m3u8
+#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="Frosinone x Sassuolo - 16/10/2026 às 15:45 (Ao vivo em Paramount+ 1)" tvg-logo="https://logos.appscms.xyz/logos/2025/Paramount.png" group-title="⚽ Jogos do Dia",Frosinone x Sassuolo - 16/10/2026 às 15:45 (Ao vivo em Paramount+ 1)
+http://topdnstop.lat:80/jajaita/123456/233137.m3u8
+#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="Le Mans x Toulouse - 16/10/2026 às 15:45 (Ao vivo em CazéTV)" tvg-logo="http://logos.appscms.xyz/logos/2025/cazetv.png" group-title="⚽ Jogos do Dia",Le Mans x Toulouse - 16/10/2026 às 15:45 (Ao vivo em CazéTV)
+http://topdnstop.lat:80/jajaita/123456/1773445.m3u8
+#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="Burnley x Wolverhampton Wanderers - 16/10/2026 às 16:00 (Ao vivo em Paramount+ 1)" tvg-logo="https://logos.appscms.xyz/logos/2025/Paramount.png" group-title="⚽ Jogos do Dia",Burnley x Wolverhampton Wanderers - 16/10/2026 às 16:00 (Ao vivo em Paramount+ 1)
+http://topdnstop.lat:80/jajaita/123456/233137.m3u8
+#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="Deportivo x Levante - 16/10/2026 às 16:00 (Ao vivo em ESPN)" tvg-logo="/logos/espn.png" group-title="⚽ Jogos do Dia",Deportivo x Levante - 16/10/2026 às 16:00 (Ao vivo em ESPN)
+http://topdnstop.lat:80/jajaita/123456/437920.m3u8
+#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="Ponte Preta x Atlético Goianiense - 16/10/2026 às 19:30 (Ao vivo em Premiere Clubes)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="⚽ Jogos do Dia",Ponte Preta x Atlético Goianiense - 16/10/2026 às 19:30 (Ao vivo em Premiere Clubes)
+http://topdnstop.lat:80/live/jajaita/123456/236242.m3u8
+#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="Mirassol x Internacional - 16/10/2026 às 20:00 (Ao vivo em Premiere Clubes)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="⚽ Jogos do Dia",Mirassol x Internacional - 16/10/2026 às 20:00 (Ao vivo em Premiere Clubes)
+http://topdnstop.lat:80/live/jajaita/123456/236242.m3u8
+#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="Sport x Fortaleza - 16/10/2026 às 20:30 (Ao vivo em Premiere 2)" tvg-logo="http://logos.appscms.xyz/logos/2025/premiere.png" group-title="⚽ Jogos do Dia",Sport x Fortaleza - 16/10/2026 às 20:30 (Ao vivo em Premiere 2)
+http://topdnstop.lat:80/live/jajaita/123456/236248.m3u8
+#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="Everton x Chelsea - 17/10/2026 às 08:30 (Ao vivo em ESPN)" tvg-logo="/logos/espn.png" group-title="📅 Jogos da Semana",Everton x Chelsea - 17/10/2026 às 08:30 (Ao vivo em ESPN)
+http://topdnstop.lat:80/jajaita/123456/437920.m3u8
+#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="Brentford x Liverpool - 17/10/2026 às 11:00 (Ao vivo em ESPN 2)" tvg-logo="/logos/espn2.png" group-title="📅 Jogos da Semana",Brentford x Liverpool - 17/10/2026 às 11:00 (Ao vivo em ESPN 2)
+http://topdnstop.lat:80/jajaita/123456/437926.m3u8
+#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="Fulham x Hull City - 17/10/2026 às 11:00 (Ao vivo em ESPN 3)" tvg-logo="/logos/espn3.png" group-title="📅 Jogos da Semana",Fulham x Hull City - 17/10/2026 às 11:00 (Ao vivo em ESPN 3)
+http://topdnstop.lat:80/jajaita/123456/437932.m3u8
+#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="Manchester City x Ipswich Town - 17/10/2026 às 11:00 (Ao vivo em ESPN 4)" tvg-logo="/logos/espn4.png" group-title="📅 Jogos da Semana",Manchester City x Ipswich Town - 17/10/2026 às 11:00 (Ao vivo em ESPN 4)
+http://topdnstop.lat:80/jajaita/123456/437938.m3u8
+#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="Newcastle United x Aston Villa - 17/10/2026 às 13:30 (Ao vivo em ESPN 5)" tvg-logo="/logos/espn5.png" group-title="📅 Jogos da Semana",Newcastle United x Aston Villa - 17/10/2026 às 13:30 (Ao vivo em ESPN 5)
+http://topdnstop.lat:80/jajaita/123456/437944.m3u8
+#EXTINF:-1 tvg-id="FutebolAoVivo.br" tvg-name="Braga x Gil Vicente - 19/10/2026 às 16:15 (Ao vivo em ESPN 4)" tvg-logo="/logos/espn4.png" group-title="📅 Jogos da Semana",Braga x Gil Vicente - 19/10/2026 às 16:15 (Ao vivo em ESPN 4)
+http://topdnstop.lat:80/jajaita/123456/437938.m3u8
 #EXTINF:-1 tvg-id="TVGloboSaoPaulo.br" tvg-name="Globo SP" tvg-logo="/logos/globo.png" group-title="Canais Abertos",Globo SP
 http://topdnstop.lat:80/jajaita/123456/234262.m3u8
 #EXTINF:-1 tvg-id="TVGloboRiodeJaneiro.br" tvg-name="Globo RJ" tvg-logo="/logos/globo.png" group-title="Canais Abertos",Globo RJ
