@@ -309,7 +309,8 @@ function registerScreenHeartbeat(token, screenId, clientIp, userAgent) {
     }
 
     // Verificar quantas telas diferentes este usuário está usando (outras sessões ativas)
-    const maxScreens = user.maxScreens || 1;
+    // Administrador tem tolerância para múltiplas abas de teste
+    const maxScreens = user.role === 'admin' ? 10 : (user.maxScreens || 1);
     const userOtherActiveSessions = [];
     for (const [tok, sess] of activeSessions.entries()) {
         if (sess.userId === user.id && tok !== token) {
@@ -341,6 +342,15 @@ function registerScreenHeartbeat(token, screenId, clientIp, userAgent) {
     };
 }
 
+function getSession(token) {
+    cleanupStaleSessions();
+    return activeSessions.get(token) || null;
+}
+
+function destroySession(token) {
+    return activeSessions.delete(token);
+}
+
 module.exports = {
     getAllUsers,
     getUserById,
@@ -351,5 +361,7 @@ module.exports = {
     renewUser,
     kickUserSession,
     authenticate,
-    registerScreenHeartbeat
+    registerScreenHeartbeat,
+    getSession,
+    destroySession
 };

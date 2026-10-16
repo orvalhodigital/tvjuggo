@@ -9,7 +9,151 @@
  * - Controle de 1 Tela por Usuário integrado com Heartbeat
  */
 
-function renderNetflixWebTVApp(host, appName = 'Juggo TV Studio') {
+function renderNetflixLogin(appName = 'Juggo TV Studio', hasError = false, errorMsg = '') {
+    return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>${appName} - Entrar no Cinema & TV</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #e50914;
+            --primary-glow: rgba(229, 9, 20, 0.45);
+            --bg-cinema: #06080e;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Outfit', sans-serif; }
+        body {
+            background: radial-gradient(circle at 50% 30%, #1a080c 0%, #06080e 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+        .login-card {
+            background: rgba(18, 24, 38, 0.85);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 24px;
+            padding: 44px 36px;
+            width: 100%;
+            max-width: 440px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8), 0 0 50px rgba(229, 9, 20, 0.2);
+            text-align: center;
+        }
+        .brand-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #e50914, #b91c1c);
+            color: #fff;
+            padding: 6px 16px;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 900;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            box-shadow: 0 6px 14px rgba(229, 9, 20, 0.4);
+        }
+        h1 { font-size: 28px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 8px; }
+        p { color: var(--text-muted); font-size: 14px; margin-bottom: 28px; line-height: 1.5; }
+        .form-group { text-align: left; margin-bottom: 20px; }
+        label { display: block; font-size: 13px; font-weight: 700; color: #cbd5e1; margin-bottom: 8px; }
+        input {
+            width: 100%;
+            padding: 14px 18px;
+            background: rgba(10, 14, 26, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 15px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+        input:focus {
+            border-color: #e50914;
+            box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.25);
+        }
+        .btn-submit {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #e50914, #b91c1c);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 10px;
+            box-shadow: 0 10px 24px rgba(229, 9, 20, 0.45);
+        }
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 30px rgba(229, 9, 20, 0.65);
+        }
+        .error-alert {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.35);
+            color: #fca5a5;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 13.5px;
+            font-weight: 600;
+            margin-bottom: 22px;
+            text-align: left;
+        }
+        .hint-card {
+            margin-top: 24px;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px dashed rgba(255, 255, 255, 0.12);
+            border-radius: 10px;
+            font-size: 12px;
+            color: #94a3b8;
+            line-height: 1.6;
+        }
+        .hint-card strong { color: #60a5fa; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="brand-badge">📺 ${appName}</div>
+        <h1>Entrar na Juggo TV</h1>
+        <p>Informe seu usuário e senha para acessar os canais ao vivo e jogos especiais.</p>
+
+        ${hasError ? `<div class="error-alert">⚠️ ${errorMsg || 'Usuário ou senha incorretos. Tente novamente.'}</div>` : ''}
+
+        <form action="/login" method="POST">
+            <div class="form-group">
+                <label for="username">Usuário (Login)</label>
+                <input type="text" id="username" name="username" placeholder="Digite seu usuário (ex: admin)" required autofocus>
+            </div>
+            <div class="form-group">
+                <label for="password">Senha</label>
+                <input type="password" id="password" name="password" placeholder="Digite sua senha" required>
+            </div>
+            <button type="submit" class="btn-submit">Acessar Plataforma</button>
+
+            <div class="hint-card">
+                🔑 <strong>Admin Master:</strong> Usuário <strong>admin</strong> | Senha <strong>neto</strong><br>
+                👤 <strong>Clientes:</strong> Criados e gerenciados via painel <strong>/users</strong>
+            </div>
+        </form>
+    </div>
+</body>
+</html>`;
+}
+
+function renderNetflixWebTVApp(host, appName = 'Juggo TV Studio', currentUser = {}) {
     return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -685,22 +829,20 @@ function renderNetflixWebTVApp(host, appName = 'Juggo TV Studio') {
                 📺 ${appName} <span class="brand-badge">STUDIO</span>
             </a>
             <nav class="nav-links">
-                <a href="#hero" class="nav-item active">Início</a>
-                <a href="#jogos-dia" class="nav-item">⚽ Jogos do Dia</a>
-                <a href="#canais-aovivo" class="nav-item">📺 TV Ao Vivo</a>
-                <a href="#jogos-semana" class="nav-item">📅 Próximos Jogos</a>
-                <a href="/users" class="nav-item" style="color:#60a5fa;">👥 Painel Usuários</a>
+                <a href="/" class="nav-item active">⚽ Jogos do Dia</a>
+                <a href="/tv" class="nav-item">📺 TV Ao Vivo</a>
+                ${currentUser.role === 'admin' ? '<a href="/users" class="nav-item" style="color:#60a5fa; font-weight:700;">👥 Painel Usuários</a>' : ''}
             </nav>
         </div>
 
         <div class="nav-right">
-            <div class="search-pill">
-                <span>🔍</span>
-                <input type="text" id="mainSearch" placeholder="Buscar canal ou jogo..." onkeyup="onSearch(event)">
-            </div>
-            <div class="user-status-pill">
+            <div class="user-status-pill" id="screenStatusPill" style="border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.1);">
                 <span class="pulse-live"></span>
-                <span id="screenStatusLabel">1/1 Tela Conectada</span>
+                <span id="screenStatusLabel" style="color:#10b981; font-weight:700;">1/1 Tela Conectada</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span style="font-size:13px; font-weight:700; color:#cbd5e1;">👤 ${currentUser.name || currentUser.username || 'Usuário'}</span>
+                <a href="/logout" style="padding:6px 12px; background:rgba(239,68,68,0.2); border:1px solid rgba(239,68,68,0.4); color:#fca5a5; font-size:12px; font-weight:700; border-radius:8px; text-decoration:none;">Sair</a>
             </div>
         </div>
     </header>
@@ -758,19 +900,7 @@ function renderNetflixWebTVApp(host, appName = 'Juggo TV Studio') {
             </div>
         </section>
 
-        <!-- 2. Canais de TV Ao Vivo -->
-        <section class="section-tray" id="canais-aovivo">
-            <div class="tray-header">
-                <h3 class="tray-title">
-                    <span>📺</span> Canais de TV Ao Vivo
-                </h3>
-            </div>
-            <div class="tray-scroll-wrapper">
-                <div class="tray-row" id="channelsRow">
-                    <!-- Canais injetados via JS -->
-                </div>
-            </div>
-        </section>
+
 
         <!-- 3. Agenda da Semana -->
         <section class="section-tray" id="jogos-semana">
@@ -891,12 +1021,16 @@ function renderNetflixWebTVApp(host, appName = 'Juggo TV Studio') {
         let todayMatches = [];
         let allChannels = [];
         let activeMatch = null;
-        let sessionToken = localStorage.getItem('juggo_session_token') || 'demo_token';
-        let screenId = localStorage.getItem('juggo_screen_id') || ('scr_' + Math.random().toString(36).slice(2, 9));
-        localStorage.setItem('juggo_screen_id', screenId);
+        let sessionToken = '${currentUser.token || ''}';
+        let screenId = '${currentUser.screenId || ''}';
+        if (!screenId) {
+            screenId = localStorage.getItem('juggo_screen_id') || ('scr_' + Math.random().toString(36).slice(2, 9));
+            localStorage.setItem('juggo_screen_id', screenId);
+        }
 
         // Heartbeat para garantir o limite de 1 tela simultânea
         async function sendScreenHeartbeat() {
+            if (!sessionToken) return;
             try {
                 const res = await fetch('/api/user/heartbeat', {
                     method: 'POST',
@@ -904,12 +1038,20 @@ function renderNetflixWebTVApp(host, appName = 'Juggo TV Studio') {
                     body: JSON.stringify({ token: sessionToken, screenId: screenId })
                 });
                 const data = await res.json();
+                const label = document.getElementById('screenStatusLabel');
+                const pill = document.getElementById('screenStatusPill');
                 if (data.allowed === false) {
-                    // Limite excedido ou bloqueado
-                    document.getElementById('screenStatusLabel').innerText = 'Limite de 1 tela excedido!';
-                    document.getElementById('screenStatusLabel').style.color = '#ef4444';
+                    label.innerText = 'Limite de tela excedido!';
+                    label.style.color = '#ef4444';
+                    pill.style.borderColor = 'rgba(239,68,68,0.4)';
+                    pill.style.background = 'rgba(239,68,68,0.1)';
                     closePlayer();
                     alert(data.error || 'Acesso bloqueado por limite de tela simultânea.');
+                } else {
+                    label.innerText = '1/1 Tela Conectada';
+                    label.style.color = '#10b981';
+                    pill.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+                    pill.style.background = 'rgba(16, 185, 129, 0.1)';
                 }
             } catch(e) {}
         }
@@ -1179,5 +1321,6 @@ function renderNetflixWebTVApp(host, appName = 'Juggo TV Studio') {
 }
 
 module.exports = {
-    renderNetflixWebTVApp
+    renderNetflixWebTVApp,
+    renderNetflixLogin
 };

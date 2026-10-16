@@ -73,15 +73,17 @@ function handleAdminRoutes(req, res, context) {
                     } catch(e) {}
                 }
 
+                const redirectTarget = parsedUrl.searchParams.get('redirect') || '/admin';
                 if (isAdmin) {
                     res.writeHead(302, {
                         'Set-Cookie': 'juggo_admin_session=neto_authenticated; Path=/; HttpOnly; Max-Age=2592000; SameSite=Lax',
-                        'Location': '/admin'
+                        'Location': redirectTarget
                     });
                     res.end();
                 } else {
+                    const errRedirect = (redirectTarget && redirectTarget !== '/admin') ? `${redirectTarget}?error=invalid_credentials` : '/admin?error=invalid_credentials';
                     res.writeHead(302, {
-                        'Location': '/admin?error=invalid_credentials'
+                        'Location': errRedirect
                     });
                     res.end();
                 }
@@ -351,13 +353,14 @@ function execGamesUpdate(context) {
     });
 }
 
-function renderAdminLogin(hasError) {
+function renderAdminLogin(hasError, redirectTarget = '/admin', title = 'Área de Membros', desc = 'Acesse o painel para gerenciar o sistema.') {
+    const postAction = (redirectTarget && redirectTarget !== '/admin') ? `/admin/login?redirect=${encodeURIComponent(redirectTarget)}` : '/admin/login';
     return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Juggo TV - Área de Membros</title>
+    <title>Juggo TV - ${title}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -436,26 +439,39 @@ function renderAdminLogin(hasError) {
             font-size: 13px;
             margin-bottom: 20px;
         }
+        .cred-hint {
+            margin-top: 20px;
+            padding: 10px 14px;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 8px;
+            border: 1px dashed rgba(255, 255, 255, 0.12);
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        .cred-hint strong { color: #60a5fa; }
     </style>
 </head>
 <body>
     <div class="login-card">
         <div class="logo-badge">⚡ JUGGO TV CLOUD</div>
-        <h1>Área de Membros</h1>
-        <p>Acesse o painel para gerenciar a lista e os canais.</p>
+        <h1>${title}</h1>
+        <p>${desc}</p>
 
         ${hasError ? `<div class="error-alert">Login ou senha incorretos. Tente novamente.</div>` : ''}
 
-        <form action="/admin/login" method="POST">
+        <form action="${postAction}" method="POST">
             <div class="form-group">
                 <label for="username">Usuário</label>
-                <input type="text" id="username" name="username" placeholder="Digite seu login" required autofocus>
+                <input type="text" id="username" name="username" placeholder="Digite seu login (ex: admin)" required autofocus>
             </div>
             <div class="form-group">
                 <label for="password">Senha</label>
                 <input type="password" id="password" name="password" placeholder="Digite sua senha" required>
             </div>
             <button type="submit" class="btn-submit">Entrar no Painel</button>
+            <div class="cred-hint">
+                🔑 Acesso Master: Usuário <strong>admin</strong> | Senha <strong>neto</strong>
+            </div>
         </form>
     </div>
 </body>

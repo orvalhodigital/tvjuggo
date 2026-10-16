@@ -25,6 +25,7 @@ const cs2Hub = require('./services/cs2_hub');
 const userManager = require('./services/user_manager');
 const usersPanel = require('./services/users_panel');
 const webPlayerNetflix = require('./services/web_player_netflix');
+const tvPage = require('./services/tv_page');
 
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
@@ -371,27 +372,147 @@ const server = http.createServer((req, res) => {
         }
     }
 
-    function isUserAdmin(req) {
+    function getAuthenticatedUser(req) {
         const cookieHeader = req.headers.cookie || '';
-        return cookieHeader.includes('juggo_admin_session=neto_authenticated');
+        if (cookieHeader.includes('juggo_admin_session=neto_authenticated')) {
+            const authAdmin = userManager.authenticate('admin', 'neto');
+            return {
+                id: 'usr_admin',
+                username: 'admin',
+                role: 'admin',
+                name: 'Administrador Master',
+                token: authAdmin.token,
+                screenId: authAdmin.screenId,
+                maxScreens: 10
+            };
+        }
+
+        const match = cookieHeader.match(/juggo_user_token=([a-f0-9]+)/);
+        if (match) {
+            const token = match[1];
+            const session = userManager.getSession(token);
+            if (session) {
+                const user = userManager.getUserById(session.userId);
+                if (user && user.status !== 'blocked') {
+                    if (user.expiresAt) {
+                        const expDate = new Date(user.expiresAt + 'T23:59:59');
+                        if (new Date() > expDate) return null;
+                    }
+                    return {
+                        ...user,
+                        token,
+                        screenId: session.screenId
+                    };
+                }
+            }
+        }
+        return null;
+    }
+
+    // Rota de Login POST para a Web TV e /users
+    if (pathname === '/login' && req.method === 'POST') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            try {
+                let user = '', pass = '';
+                if (req.headers['content-type'] && req.headers['content-type'].includes('application/json')) {
+                    const data = JSON.parse(body);
+                    user = data.username;
+                    pass = data.password;
+                } else {
+                    const params = new URLSearchParams(body);
+                    user = params.get('username');
+                    pass = params.get('password');
+                }
+
+                const auth = userManager.authenticate(user, pass);
+                if (auth.success) {
+                    const setCookies = [
+                        `juggo_user_token=${auth.token}; Path=/; HttpOnly; Max-Age=2592000; SameSite=Lax`
+                    ];
+                    if (auth.user.role === 'admin') {
+                        setCookies.push('juggo_admin_session=neto_authenticated; Path=/; HttpOnly; Max-Age=2592000; SameSite=Lax');
+                    }
+                    res.writeHead(302, {
+                        'Set-Cookie': setCookies,
+                        'Location': '/'
+                    });
+                    res.end();
+                } else {
+                    res.writeHead(302, {
+                        'Location': `/?error=1&msg=${encodeURIComponent(auth.error || 'Credenciais inválidas')}`
+                    });
+                    res.end();
+                }
+            } catch (e) {
+                res.writeHead(400, { 'Content-Type': 'text/plain' });
+                res.end('Erro ao processar login.');
+            }
+        });
+        return;
+    }
+
+    // Rota de Logout
+    if (pathname === '/logout') {
+        const cookieHeader = req.headers.cookie || '';
+        const match = cookieHeader.match(/juggo_user_token=([a-f0-9]+)/);
+        if (match) {
+            userManager.destroySession(match[1]);
+        }
+        res.writeHead(302, {
+            'Set-Cookie': [
+                'juggo_user_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT',
+                'juggo_admin_session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT'
+            ],
+            'Location': '/'
+        });
+        res.end();
+        return;
     }
 
     // Painel de Gestão de Usuários (/users)
     if (pathname === '/users' || pathname === '/users/' || pathname === '/usuarios') {
-        if (!isUserAdmin(req)) {
-            res.writeHead(302, { 'Location': '/admin?error=login_required' });
-            res.end();
+        const currentUser = getAuthenticatedUser(req);
+        if (!currentUser || currentUser.role !== 'admin') {
+            const { renderAdminLogin } = require('./admin_panel');
+            const hasError = parsedUrl.searchParams.get('error') === 'invalid_credentials';
+            res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+            res.end(renderAdminLogin(hasError, '/users', 'Gestão de Usuários', 'Entre com a conta mestre para gerenciar usuários e expiração.'));
             return;
         }
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-        res.end(usersPanel.renderUsersPanel({ username: 'admin', role: 'admin' }));
+        res.end(usersPanel.renderUsersPanel(currentUser));
         return;
     }
 
-    // 1. Web TV App (Layout Cinema Netflix & Match Center Fluido)
-    if (pathname === '/' || pathname === '/index.html' || pathname === '/netflix') {
+    // 1. Página Exclusiva de Jogos do Dia & Match Center
+    if (pathname === '/' || pathname === '/index.html' || pathname === '/jogos') {
+        const currentUser = getAuthenticatedUser(req);
+        if (!currentUser) {
+            const hasError = parsedUrl.searchParams.get('error') === '1';
+            const errorMsg = parsedUrl.searchParams.get('msg') || '';
+            res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+            res.end(webPlayerNetflix.renderNetflixLogin(APP_NAME, hasError, errorMsg));
+            return;
+        }
+
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-        res.end(webPlayerNetflix.renderNetflixWebTVApp(clientHost, APP_NAME));
+        res.end(webPlayerNetflix.renderNetflixWebTVApp(clientHost, APP_NAME, currentUser));
+        return;
+    }
+
+    // 1.1 Página Exclusiva de TV Ao Vivo & Canais
+    if (pathname === '/tv' || pathname === '/tv/' || pathname === '/canais') {
+        const currentUser = getAuthenticatedUser(req);
+        if (!currentUser) {
+            res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+            res.end(webPlayerNetflix.renderNetflixLogin(APP_NAME, false, 'Faça login para assistir aos canais de TV ao vivo.'));
+            return;
+        }
+
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end(tvPage.renderDedicatedTVPage(clientHost, APP_NAME, currentUser));
         return;
     }
 

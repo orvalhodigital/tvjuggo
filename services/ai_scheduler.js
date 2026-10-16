@@ -58,48 +58,68 @@ async function callGeminiApi(promptText) {
         }
     });
 
-    return new Promise((resolve, reject) => {
-        const options = {
-            hostname: 'generativelanguage.googleapis.com',
-            port: 443,
-            path: `/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Content-Length': Buffer.byteLength(payload)
-            },
-            timeout: 25000
-        };
+    const candidateModels = [
+        'gemini-flash-latest',
+        'gemini-3.8-flash',
+        'gemini-3.5-flash',
+        'gemini-2.5-pro',
+        'gemini-pro-latest'
+    ];
 
-        const req = https.request(options, (res) => {
-            let data = '';
-            res.on('data', chunk => data += chunk);
-            res.on('end', () => {
-                try {
-                    const json = JSON.parse(data);
-                    if (json.candidates && json.candidates[0] && json.candidates[0].content) {
-                        const answer = json.candidates[0].content.parts[0].text;
-                        resolve(answer);
-                    } else if (json.error) {
-                        reject(new Error(json.error.message || 'Erro na API Gemini'));
-                    } else {
-                        reject(new Error('Resposta vazia da IA'));
-                    }
-                } catch (e) {
-                    reject(e);
-                }
+    let lastError = null;
+    for (const modelName of candidateModels) {
+        try {
+            const result = await new Promise((resolve, reject) => {
+                const options = {
+                    hostname: 'generativelanguage.googleapis.com',
+                    port: 443,
+                    path: `/v1beta/models/${modelName}:generateContent?key=${apiKey}`,
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Content-Length': Buffer.byteLength(payload)
+                    },
+                    timeout: 20000
+                };
+
+                const req = https.request(options, (res) => {
+                    let data = '';
+                    res.on('data', chunk => data += chunk);
+                    res.on('end', () => {
+                        try {
+                            const json = JSON.parse(data);
+                            if (json.candidates && json.candidates[0] && json.candidates[0].content) {
+                                const answer = json.candidates[0].content.parts[0].text;
+                                resolve(answer);
+                            } else if (json.error) {
+                                reject(new Error(`[${modelName}] ${json.error.message || 'Erro Gemini'}`));
+                            } else {
+                                reject(new Error(`[${modelName}] Resposta vazia da IA`));
+                            }
+                        } catch (e) {
+                            reject(e);
+                        }
+                    });
+                });
+
+                req.on('timeout', () => {
+                    req.destroy();
+                    reject(new Error(`Timeout ao consultar ${modelName}`));
+                });
+
+                req.on('error', reject);
+                req.write(payload);
+                req.end();
             });
-        });
 
-        req.on('timeout', () => {
-            req.destroy();
-            reject(new Error('Timeout de 25s ao consultar Gemini'));
-        });
+            if (result) return result;
+        } catch (err) {
+            lastError = err;
+            console.log(`[IA-Agent] Modelo ${modelName} indisponível (${err.message}). Tentando próximo...`);
+        }
+    }
 
-        req.on('error', reject);
-        req.write(payload);
-        req.end();
-    });
+    throw lastError || new Error('Nenhum modelo Gemini respondeu no momento.');
 }
 
 // Execução da análise profunda dos próximos 10 dias
